@@ -1,0 +1,225 @@
+---
+title: "tidycensus_tinkering"
+author: "Colleen Minnihan"
+date: "4/14/2021"
+output: html_document
+---
+
+#load packages
+```{r}
+library(tidycensus)
+library(tidyverse)
+library(sf)
+```
+
+#get API Key:  http://api.census.gov/data/key_signup.html.
+
+Make sure you don't push with your key in plain sight!
+```{r, install = TRUE}
+#census_api_key("key")
+```
+
+```{r}
+#in geography you can put us, region, state, county, school district (elementary, secondary, unified)
+
+#to see variables
+#View(load_variables(year = 2019, "acs5", cache = TRUE))
+```
+
+
+```{r}
+#median income in last 12 months by county
+get_acs(geography = "county",
+        variables = "B06011_001",
+        state = "MN",
+        year = 2019)
+
+#median income in last 12 months by school district (unified: K-12)
+get_acs(geography = "school district (unified)",
+        variables = "B06011_001",
+        state = "MN",
+        year = 2019)
+```
+
+```{r}
+#visualizing median income in last 12 months by county
+income_county <- get_acs(geography = "county",
+        variables = "B06011_001",
+        state = "MN",
+        year = 2019)
+
+income_county[1:25,] %>%
+  ggplot(aes(x = estimate, y = reorder(NAME, estimate))) + 
+  geom_point()
+```
+
+
+```{r}
+#"Black or African American alone" race by school district
+get_acs(geography = "school district (unified)",
+        variables = "B02001_003",
+        state = "MN",
+        year = 2019)
+
+#"White alone" race by school district
+get_acs(geography = "school district (unified)",
+        variables = "B02001_002",
+        state = "MN",
+        year = 2019)
+
+#maybe we should convert these to percentages rather than a number (when we do data wrangling)
+```
+
+Visualize school districts in MN by median income
+```{r}
+district_income <- get_acs(state = "MN", geography = "school district (unified)", 
+                  variables = "B06011_001", geometry = TRUE, year = 2019)
+
+district_income %>%
+  ggplot(aes(fill = estimate)) + 
+  geom_sf(color = NA)
+```
+
+Visualize counties in MN by median income
+```{r}
+county_income <- get_acs(state = "MN", geography = "county", 
+                  variables = "B06011_001", geometry = TRUE, year = 2019)
+
+county_income %>%
+  ggplot(aes(fill = estimate)) + 
+  geom_sf(color = NA)
+```
+
+Potential variables to look at for the 2019 census:
+
+**POPULATION**
+  *total population (B01003_001)
+  (perhaps the bigger districts are more likely to offer it)
+  
+**SEX**
+  * Male 5-9 years old (B01001_004)
+  * Male 10-14 years old (B01001_005)
+  * Male 15-17 years old (B01001_006)
+  (I would imagine that schools with a larger number of men may be more likely to have comp sci offerings?)
+  
+**RACE**
+  * Race: white alone (B02001_002)
+  * Race: Black or African American alone (B02001_003)
+  * Race: Asian alone (B02001_005)
+  * Race: Native Hawaiian and other pacific islander alone (B02001_006)
+  * Race: Two or more races (B02001_008)
+  
+**INCOME/POVERTY**
+  * Median household income in last 12 months (B19013_001)
+  * receive supplemental security income, cash public assistance income, or food stamps in households w/ child under 18 (B09010_001)
+  * number of earners in family (B19122_001)
+  * median gross rent (B25031_001)
+  * housing units w/ a mortgage (B25027_001)
+
+**HOME ENVIRONMENT**
+  * Prescence of computer and internet subscription in household (B28003_001)
+
+
+#load ACT data
+```{r}
+act <- read_csv("act_data.csv")
+
+#data cleaning
+act_clean <-
+act %>% 
+  filter(`Grad Year` == 2018,
+         `Analysis Level` == "District",
+         `District Name` != "MINNESOTA DEPT OF EDUCATION",
+         `Avg Comp` != ".") %>% 
+  select(`District Name`, `Avg Comp`) %>% 
+  mutate(`Dist Num` = as.integer(str_extract_all(`District Name`, "[:digit:]+"))) %>% 
+  mutate(`Dist Num`= replace(`Dist Num`, `District Name`=="GRANADA-HUNTLEY-EAST CHAIN SD", 2536),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="ALBERT LEA AREA SCHOOLS", 241),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="ATWATER-COSMOS-GROVE CITY SD", 2396),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="BOLD SCHOOL DISTRICT", 2534),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="BUFFALO HANOVER MONTROSE SD", 0877),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="BUFFALO LAKE-HECTOR-STEWART SD", 2159),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="EASTERN CARVER CO SCHOOLS", 112),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="MANKATO AREA PUBLIC SCHS", 77),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="MINNEAPOLIS PUBLIC SCH DIST", 9991),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="MINNEOTA PUBLIC SCHOOLS", 414),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="PLAINVIEW ELGIN MILLVILLE SD", 2899),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="ROYALTON PUBLIC SCHOOLS", 485),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="WASECA PUBLIC SCHOOL DIST", 829),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="WAUBUN-OGEMA-WHITE EARTH PSD", 435),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="WINONA AREA PUBLIC SCHOOL DIST", 861)) 
+
+act_clean
+```
+
+#Making a dataset with relevant census variables
+```{r}
+
+mn_2019_census <- get_acs(state = "MN", 
+                         geography = "school district (unified)",
+                         variables = c("B01003_001",
+                                       "B01001_004",
+                                       "B01001_005",
+                                       "B01001_006",
+                                       "B02001_002",
+                                       "B02001_003",
+                                       "B02001_005",
+                                       "B02001_006",
+                                       "B02001_008",
+                                       "B19013_001",
+                                       "B09010_001", 
+                                       "B25031_001",
+                                       "B25027_001",
+                                       "B28003_001"),
+                         geometry = TRUE,
+                         year = 2019)
+
+mn_2019_census_nogeom <- mn_2019_census %>%
+  st_drop_geometry() %>% #get rid of the geometry so we can spread()
+  select(-`moe`) %>% #get rid of moe variable(not sure what it is)
+  spread(variable, estimate) %>% #give each variable a column
+  rename(total_pop = B01003_001,
+         male_5to9 = B01001_004,
+         male_10to14 = B01001_005,
+         male_15to17 = B01001_006,
+         race_white_only = B02001_002,
+         race_Black_only = B02001_003,
+         race_Asian_only = B02001_005,
+         race_pacific_islander_only = B02001_006,
+         at_least_two_races = B02001_008,
+         med_household_inc_12mo = B19013_001,
+         SSI_pubassist_foodstamps = B09010_001,
+         med_gross_rent = B25031_001,
+         house_units_w_mortgage = B25027_001,
+         comp_internet_subscrip_in_house = B28003_001
+         ) %>% #rename variables
+  mutate(District = str_extract(`NAME`, "[^,]+")) %>% #delete ", Minnesota" after district name
+  select(-NAME)#remove `NAME` column
+  
+
+mn_2019_census_nogeom
+
+```
+
+#load dataset with district numbers
+```{r}
+districts <- read_csv("districts.csv")
+
+districts <- districts %>%
+  mutate(District = `District Name`) %>%
+  select(-`X3`, - `District Name`)
+```
+#join so that census dataset has district numbers
+```{r}
+mn_2019_census_nogeom <- mn_2019_census_nogeom %>%
+  left_join(districts)
+
+mn_2019_census_nogeom
+
+#the only NA value is for the "remainder of Minnesota"- should we get rid of this row anyways because it's not a school district?
+colSums(is.na(mn_2019_census_nogeom))
+```
+
+
+
+
