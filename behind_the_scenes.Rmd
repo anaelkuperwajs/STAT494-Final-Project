@@ -1,0 +1,135 @@
+---
+title: "Behind The Scenes"
+author: "Colleen Minnihan"
+date: "4/21/2021"
+output: html_document
+---
+
+(some of this stuff can be put into our final project document when we are ready)
+
+# Introduction
+
+Computer Science is a field that is growing rapidly in the United States today.  Even at Macalester, it is one of the largest departments in terms of how many people choose to major in it.  Offering computer science courses in elementary and secondary schools provides an opportunity for kids to expose themselves to coding, potentially causing them to discover interests and feel more empowered before entering the workforce or higher education.  For our Advanced Data Science final project, we decided to explore the availability of computer science courses in Minnesotan school districts.  [a brief sentence about our findings]
+
+# About the Datasets
+
+**ACT Data**
+
+We retrieved these data from ____, which gives us average composite ACT scores for each school district in Minnesota.  We thought these scores may be an interesting variable in predicting or visualizing availability of computer science courses by district.
+
+**American Community Survey**
+
+We accessed the 2019 American Community Survey (ACS) from the tidycensus package in R.  The ACS is an annual demographic survey from the U.S. Census Bureau.  We used this data set to find by-district information about race, socioeconomic status, living environments, and other relevant variables for our analyses and visualizations.
+
+**Annual Survey of School System Finances**
+
+We used the Annual Survey of School System Finances to get data about ______(budgeting? expenditures on ___?) for each school district in Minnesota.
+
+**District Numbers**
+
+This data set includes the name of all school districts in Minnesota as well as their district numbers.  We joined the district numbers from this data set to the American Community Survey Data, which only had the district names.
+
+**Minnesota Common Course Catalogue**
+
+This data set gives us information about computer science courses taught in Minnesota, such as [...course title and number?].
+
+# Load Packages
+```{r}
+library(tidycensus) # for getting the census data
+library(tidyverse) # for data cleaning and visualization
+library(sf) # for mapping
+```
+
+## Load Datasets
+```{r}
+act <- read_csv("act_data.csv") # ACT scores
+districts <- read_csv("districts.csv") # District numbers
+```
+
+# Data Cleaning
+
+**ACT Data**
+```{r}
+act_clean <-
+act %>% 
+  filter(`Grad Year` == 2018,
+         `Analysis Level` == "District",
+         `District Name` != "MINNESOTA DEPT OF EDUCATION",
+         `Avg Comp` != ".") %>% 
+  select(`District Name`, `Avg Comp`) %>% 
+  mutate(`Dist Num` = as.integer(str_extract_all(`District Name`, "[:digit:]+"))) %>% 
+  mutate(`Dist Num`= replace(`Dist Num`, `District Name`=="GRANADA-HUNTLEY-EAST CHAIN SD", 2536),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="ALBERT LEA AREA SCHOOLS", 241),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="ATWATER-COSMOS-GROVE CITY SD", 2396),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="BOLD SCHOOL DISTRICT", 2534),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="BUFFALO HANOVER MONTROSE SD", 0877),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="BUFFALO LAKE-HECTOR-STEWART SD", 2159),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="EASTERN CARVER CO SCHOOLS", 112),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="MANKATO AREA PUBLIC SCHS", 77),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="MINNEAPOLIS PUBLIC SCH DIST", 9991),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="MINNEOTA PUBLIC SCHOOLS", 414),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="PLAINVIEW ELGIN MILLVILLE SD", 2899),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="ROYALTON PUBLIC SCHOOLS", 485),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="WASECA PUBLIC SCHOOL DIST", 829),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="WAUBUN-OGEMA-WHITE EARTH PSD", 435),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="WINONA AREA PUBLIC SCHOOL DIST", 861)) 
+```
+
+**ACS Data**
+```{r}
+mn_2019_census <- get_acs(state = "MN", 
+                         geography = "school district (unified)",
+                         variables = c("B01003_001",
+                                       "B01001_004",
+                                       "B01001_005",
+                                       "B01001_006",
+                                       "B02001_002",
+                                       "B02001_003",
+                                       "B02001_005",
+                                       "B02001_006",
+                                       "B02001_008",
+                                       "B19013_001",
+                                       "B09010_001", 
+                                       "B25031_001",
+                                       "B25027_001",
+                                       "B28003_001"),
+                         geometry = TRUE,
+                         year = 2019)
+
+mn_2019_census_nogeom <- mn_2019_census %>%
+  st_drop_geometry() %>% #get rid of the geometry so we can spread()
+  select(-`moe`) %>% #get rid of moe variable(not sure what it is)
+  spread(variable, estimate) %>% #give each variable a column
+  rename(total_pop = B01003_001,
+         male_5to9 = B01001_004,
+         male_10to14 = B01001_005,
+         male_15to17 = B01001_006,
+         race_white_only = B02001_002,
+         race_Black_only = B02001_003,
+         race_Asian_only = B02001_005,
+         race_pacific_islander_only = B02001_006,
+         at_least_two_races = B02001_008,
+         med_household_inc_12mo = B19013_001,
+         SSI_pubassist_foodstamps = B09010_001,
+         med_gross_rent = B25031_001,
+         house_units_w_mortgage = B25027_001,
+         comp_internet_subscrip_in_house = B28003_001
+         ) %>% #rename variables
+  mutate(District = str_extract(`NAME`, "[^,]+")) %>% #delete ", Minnesota" after district name
+  select(-NAME)#remove `NAME` column
+
+#adding a column with district numbers
+districts <- districts %>%
+  mutate(District = `District Name`) %>%
+  select(-`X3`, - `District Name`)
+
+mn_2019_census_nogeom <- mn_2019_census_nogeom %>%
+  left_join(districts)
+```
+
+
+
+
+
+
+
