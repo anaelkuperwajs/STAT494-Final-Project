@@ -1,0 +1,139 @@
+---
+title: "Data Joining"
+author: "Thy Nguyen"
+date: "4/23/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(sf)
+```
+
+```{r}
+# read in datasets
+## annual survey of school system finances (2018, national)
+ss <- readxl::read_excel("elsec18t.xls")
+
+## selected variables from the ACS (2019, MN)
+mn_acs <- st_read("mn_2019_census/mn_2019_census.shp", 
+                  geometry_column = "geometry", 
+                  fid_column_name = "geometry")
+mn_acs <- as.data.frame(mn_acs)
+# rename the columns
+names(mn_acs) <- c("GEOID", "male_5to9", "male_10to14", "male_15to17",
+                   "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+                   "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+                   "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+                   "comp_internet_subscrip_in_house", "District", "District.Nbr", "geometry")
+# move the district name and number cols to the front
+mn_acs <- mn_acs %>%
+  relocate(District, District.Nbr, .after = GEOID)
+
+## ACT scores (MN)
+mn_act <- read.csv("act_clean.csv")[-1] # remove the redundant index column created when reading by csv
+```
+
+Join by NCES ID for school districts
+
+```{r}
+# look at this column from the school survey
+ss %>%
+  # filter for MN 
+  filter(str_detect(NCESID, "^27")) %>%
+  arrange(NCESID) %>%
+  head(10) %>%
+  select(NCESID)
+
+# and from the ACS
+mn_acs %>%
+  arrange(GEOID) %>%
+  head(10) %>%
+  select(GEOID)
+```
+
+```{r}
+# left join on ACS data
+mn_acs_ss <- mn_acs %>%
+  left_join(ss, by = c("GEOID" = "NCESID"))
+```
+
+Let's look at the name columns from the two datasets to verify that they point to the same district
+
+```{r}
+mn_acs_ss %>%
+  select(District, NAME)
+```
+
+Now let's see which rows from the ACS and school survey didn't get a match
+
+```{r}
+# ACS
+mn_acs_ss %>%
+  filter(is.na(NAME))
+
+# school survey
+ss %>%
+  filter(str_detect(NCESID, "^27")) %>% # filter for MN
+  anti_join(mn_acs, by = c("NCESID" = "GEOID"))
+```
+
+So only the row "Remainder of Minnesota" from the ACS didn't have a match, which makes perfect sense. There are 67 school districts from the school survey that did not join to the ACS, but perhaps they fall into the "Remainder of Minnesota" category.
+
+To join this dataset with the ACT data, we'll have to use the school district numbers as the ACT data does not contain the NCES ID.
+
+```{r}
+# look at this variable from each dataset to see their format
+mn_acs_ss %>%
+  arrange(District.Nbr) %>%
+  select(District.Nbr)
+
+mn_act %>%
+  arrange(Dist.Num) %>%
+  select(Dist.Num)
+```
+
+Seems like we're missing ACT scores for 11 school districts. Nevertheless the formats do match so let's join the datasets
+
+```{r}
+mn_acs_ss_act <- mn_acs_ss %>%
+  mutate(District.Nbr = as.integer(District.Nbr)) %>%
+  left_join(mn_act, by = c("District.Nbr" = "Dist.Num"))
+```
+
+Finally before we export the data, we can remove the redundant names and ID columns from the school survey and ACT datasets as we'll stick to their format from the ACS
+
+```{r}
+mn_acs_ss_act <- mn_acs_ss_act %>%
+  select(-c("IDCENSUS", "NAME", "District.Name"))
+```
+
+Export the data:
+
+```{r}
+write.csv(mn_acs_ss_act, "mn_acs_ss_act.csv")
+```
+
+```{r}
+st_write(mn_acs_ss_act, "mn_acs_ss_act/mn_acs_ss_act.shp", 
+         append=FALSE, 
+         fid_column_name = "geometry")
+```
+
+```{r eval=FALSE}
+##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
+data <- st_read("mn_acs_ss_act/mn_acs_ss_act.shp",
+                geometry_column = "geometry",
+                fid_column_name = "geometry")
+# rename the census variables because their names were reformatted...
+names(data)[1:17] <- c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
+                       "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+                       "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+                       "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+                       "comp_internet_subscrip_in_house")
+```
+
