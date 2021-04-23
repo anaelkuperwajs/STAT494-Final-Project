@@ -1,0 +1,19 @@
+---
+title: "catalog cleaning"
+output: html_document
+---
+
+
+```{r}
+#Use whatever code here to import the catalog
+course_catalog <- read_csv("course_catalog.csv")
+```
+
+```{r}
+course_catalog_predictors <-
+course_catalog %>% 
+  mutate(DistNum = as.integer(str_sub(`District`, -7,-4))) %>% 
+  group_by(DistNum) %>% 
+  summarise(TotalClasses = sum(n()),
+            NumCat = length(unique(Category)))
+```
