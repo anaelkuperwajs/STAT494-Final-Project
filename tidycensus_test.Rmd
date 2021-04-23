@@ -221,7 +221,10 @@ colSums(is.na(mn_2019_census_nogeom))
 
 ```{r}
 write.csv(act_clean, "act_clean.csv")
-write.csv(mn_2019_census_nogeom, "mn_2019_census.csv")
+# write.csv(mn_2019_census_nogeom, "mn_2019_census.csv")
+st_write(mn_2019_census_nogeom, "mn_2019_census/mn_2019_census.shp", 
+         append=FALSE, 
+         fid_column_name = "geometry")
 ```
 
 
