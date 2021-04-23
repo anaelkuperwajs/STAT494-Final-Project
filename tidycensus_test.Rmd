@@ -6,7 +6,7 @@ output: html_document
 ---
 
 #load packages
-```{r}
+```{r,options(tigris_use_cache = TRUE)}
 library(tidycensus)
 library(tidyverse)
 library(sf)
@@ -175,7 +175,6 @@ mn_2019_census <- get_acs(state = "MN",
                          year = 2019)
 
 mn_2019_census_nogeom <- mn_2019_census %>%
-  st_drop_geometry() %>% #get rid of the geometry so we can spread()
   select(-`moe`) %>% #get rid of moe variable(not sure what it is)
   spread(variable, estimate) %>% #give each variable a column
   rename(total_pop = B01003_001,
