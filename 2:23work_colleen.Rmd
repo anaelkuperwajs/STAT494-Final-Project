@@ -1,0 +1,19 @@
+---
+title: "visualizations and stuff"
+author: "Colleen Minnihan"
+date: "4/23/2021"
+output: html_document
+---
+
+
+```{r}
+mn_2019_census_nogeom %>%
+  ggplot(aes(fill =med_household_inc_12mo)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
+  labs(fill = "Median Household Income") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+```
+
