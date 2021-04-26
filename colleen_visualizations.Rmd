@@ -1,0 +1,170 @@
+---
+title: "visualizations and stuff"
+author: "Colleen Minnihan"
+date: "4/23/2021"
+output: html_document
+---
+
+```{r eval=FALSE}
+##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
+data <- st_read("mn_acs_ss_act/mn_acs_ss_act.shp",
+                geometry_column = "geometry",
+                fid_column_name = "geometry")
+# rename the census variables because their names were reformatted...
+names(data)[1:17] <- c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
+                       "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+                       "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+                       "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+                       "comp_internet_subscrip_in_house")
+
+View(data)
+```
+
+```{r}
+mn_2019_census_nogeom %>%
+  ggplot(aes(fill =med_household_inc_12mo)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
+  labs(fill = "Median Household Income") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+```
+
+```{r}
+#making new dataset with percentages (b/c that would make more sense to visualize so that they are scaled to the population)
+newdata <- data %>%
+  mutate(percent_white = race_white_only/total_pop) %>%
+  mutate(percent_black = race_Black_only/total_pop) %>%
+  mutate(perc_internet_sub = comp_internet_subscrip_in_house/total_pop) %>%
+  mutate(perc_pub_assist = SSI_pubassist_foodstamps/total_pop)
+
+newdata
+
+#percent race white only.... ok so MN is veryyyyyy white
+ggplot(newdata, aes(fill = percent_white)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma") +
+  labs(fill = "Percentage of White People") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+```
+
+```{r}
+#percent of ppl that have computer and internet subscription in household
+ggplot(newdata, aes(fill = perc_internet_sub)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::percent) +
+  labs(fill = "Percent Internet Subscription") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+```
+
+```{r}
+#percent of ppl that receive food stamps or SSI or public assistance
+ggplot(newdata, aes(fill = perc_pub_assist)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::percent) +
+  labs(fill = "Percent Public Assistance") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+```
+
+```{r}
+#total elementary/secondary revenue
+ggplot(newdata, aes(fill = TOTALRE)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
+  labs(fill = "Elementary/Secondary Revenue") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+```
+
+```{r}
+#average composite ACT score
+ggplot(data, aes(fill = Avg_Cmp)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma") +
+  labs(fill = "Average ACT Composite Score") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+```
+
+```{r}
+mn_2019_census_county <- get_acs(state = "MN", 
+                         geography = "county",
+                         variables = c("B01003_001",
+                                       "B01001_004",
+                                       "B01001_005",
+                                       "B01001_006",
+                                       "B02001_002",
+                                       "B02001_003",
+                                       "B02001_005",
+                                       "B02001_006",
+                                       "B02001_008",
+                                       "B19013_001",
+                                       "B09010_001", 
+                                       "B25031_001",
+                                       "B25027_001",
+                                       "B28003_001"),
+                         geometry = TRUE,
+                         year = 2019)
+
+mn_2019_census_county <- mn_2019_census_county %>%
+  select(-`moe`) %>% #get rid of moe variable(not sure what it is)
+  spread(variable, estimate) %>% #give each variable a column
+  rename(total_pop = B01003_001,
+         male_5to9 = B01001_004,
+         male_10to14 = B01001_005,
+         male_15to17 = B01001_006,
+         race_white_only = B02001_002,
+         race_Black_only = B02001_003,
+         race_Asian_only = B02001_005,
+         race_pacific_islander_only = B02001_006,
+         at_least_two_races = B02001_008,
+         med_household_inc_12mo = B19013_001,
+         SSI_pubassist_foodstamps = B09010_001,
+         med_gross_rent = B25031_001,
+         house_units_w_mortgage = B25027_001,
+         comp_internet_subscrip_in_house = B28003_001
+         ) %>% #rename variables
+  mutate(District = str_extract(`NAME`, "[^,]+")) %>% #delete ", Minnesota" after district name
+  select(-NAME)#remove `NAME` column
+```
+
+#trying some by county
+```{r}
+bycounty_new <- mn_2019_census_county %>%
+  mutate(percent_white = race_white_only/total_pop) %>%
+  mutate(percent_black = race_Black_only/total_pop) %>%
+  mutate(perc_internet_sub = comp_internet_subscrip_in_house/total_pop) %>%
+  mutate(perc_pub_assist = SSI_pubassist_foodstamps/total_pop)
+
+
+#percent race white only.... ok so MN is veryyyyyy white
+ggplot(bycounty_new, aes(fill = percent_white)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma") +
+  labs(fill = "Percentage of White People") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+```
+
+```{r}
+#percent of ppl that have computer and internet subscription in household
+ggplot(bycounty_new, aes(fill = perc_internet_sub)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::percent) +
+  labs(fill = "Percent Internet Subscription") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+```
+
+
