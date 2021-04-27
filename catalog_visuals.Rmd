@@ -1,0 +1,60 @@
+---
+title: "model making"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(sf)
+```
+```{r eval=FALSE}
+##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
+data <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
+                geometry_column = "geometry",
+                fid_column_name = "geometry")
+```
+Run to make sure data isn't wonky
+```{r}
+View(mn_acs_ss_act_pred)
+```
+
+
+
+Visualizing Predictor Variables
+```{r}
+mn_acs_ss_act_pred %>%
+  ggplot(aes(fill = TotalClasses, geometry = geometry)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "B") +
+  labs(fill = "Total CS Courses Offered") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+
+
+mn_acs_ss_act_pred %>%
+  ggplot(aes(fill = NumCat, geometry = geometry)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "B") +
+  labs(fill = "Number of CS Course Categories Offered") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+```
+
+Connection Visualization Example
+```{r}
+mn_acs_ss_act_pred$mid <- sf::st_centroid(mn_acs_ss_act_pred$geometry)
+
+mn_acs_ss_act_pred %>% 
+ggplot(aes(geometry = geometry)) +
+  geom_sf(aes(fill = TotalClasses)) +
+  geom_sf(aes(geometry = mid, size = FEDRNUTR),  alpha = .2, color = "white", show.legend = "point") +
+  scale_size(range = c(0.5, 15)) +
+  scale_fill_viridis_c(option = "B") +
+  labs(fill = "Total CS Courses Offered") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        legend.key = element_rect(fill = "black"),)
+```
