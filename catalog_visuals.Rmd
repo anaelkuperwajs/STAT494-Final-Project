@@ -9,7 +9,7 @@ library(sf)
 ```
 ```{r eval=FALSE}
 ##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
-data <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
+mn_acs_ss_act_pred <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
                 geometry_column = "geometry",
                 fid_column_name = "geometry")
 ```
