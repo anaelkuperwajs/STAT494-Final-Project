@@ -71,5 +71,13 @@ st_write(mn_acs_ss_act_pred, "mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
 data <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
                 geometry_column = "geometry",
                 fid_column_name = "geometry")
+# rename variables that were renamed weirdly when exported as shapefile
+names(data)[1:17] <- c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
+                       "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+                       "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+                       "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+                       "comp_internet_subscrip_in_house")
+names(data)[82] <- c("TotalClasses")
+names(data)[84:87] <- c("perc_white", "perc_black", "perc_internet_sub", "perc_pub_assist")
 ```
 
