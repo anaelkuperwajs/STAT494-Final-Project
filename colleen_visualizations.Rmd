@@ -32,15 +32,6 @@ mn_2019_census_nogeom %>%
 ```
 
 ```{r}
-#making new dataset with percentages (b/c that would make more sense to visualize so that they are scaled to the population)
-newdata <- data %>%
-  mutate(percent_white = race_white_only/total_pop) %>%
-  mutate(percent_black = race_Black_only/total_pop) %>%
-  mutate(perc_internet_sub = comp_internet_subscrip_in_house/total_pop) %>%
-  mutate(perc_pub_assist = SSI_pubassist_foodstamps/total_pop)
-
-newdata
-
 #percent race white only.... ok so MN is veryyyyyy white
 ggplot(newdata, aes(fill = percent_white)) + 
   geom_sf(color = NA) + 
