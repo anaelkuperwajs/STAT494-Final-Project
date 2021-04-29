@@ -5,24 +5,27 @@ date: "4/23/2021"
 output: html_document
 ---
 
-```{r eval=FALSE}
+```{r eval=TRUE}
 ##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
-data <- st_read("mn_acs_ss_act/mn_acs_ss_act.shp",
+data <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
                 geometry_column = "geometry",
                 fid_column_name = "geometry")
-# rename the census variables because their names were reformatted...
+# rename variables that were renamed weirdly when exported as shapefile
 names(data)[1:17] <- c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
                        "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
                        "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
                        "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
                        "comp_internet_subscrip_in_house")
+names(data)[82] <- c("TotalClasses")
+names(data)[84:87] <- c("perc_white", "perc_black", "perc_internet_sub", "perc_pub_assist")
 
-View(data)
+head(data)
 ```
 
+
 ```{r}
-mn_2019_census_nogeom %>%
-  ggplot(aes(fill =med_household_inc_12mo)) + 
+data %>%
+  ggplot(aes(fill = med_household_inc_12mo)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
   labs(fill = "Median Household Income") +
@@ -33,7 +36,7 @@ mn_2019_census_nogeom %>%
 
 ```{r}
 #percent race white only.... ok so MN is veryyyyyy white
-ggplot(newdata, aes(fill = percent_white)) + 
+ggplot(data, aes(fill = perc_white)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma") +
   labs(fill = "Percentage of White People") +
@@ -43,8 +46,19 @@ ggplot(newdata, aes(fill = percent_white)) +
 ```
 
 ```{r}
+#percent race Black only
+ggplot(data, aes(fill = perc_black)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma") +
+  labs(fill = "Percentage of Black People") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+```
+
+```{r}
 #percent of ppl that have computer and internet subscription in household
-ggplot(newdata, aes(fill = perc_internet_sub)) + 
+ggplot(data, aes(fill = perc_internet_sub)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent) +
   labs(fill = "Percent Internet Subscription") +
@@ -54,8 +68,20 @@ ggplot(newdata, aes(fill = perc_internet_sub)) +
 ```
 
 ```{r}
+#median gross rent
+ggplot(data, aes(fill = med_gross_rent)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma") +
+  labs(fill = "Median Gross Rent", labels = scales::dollar) +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+```
+
+
+```{r}
 #percent of ppl that receive food stamps or SSI or public assistance
-ggplot(newdata, aes(fill = perc_pub_assist)) + 
+ggplot(data, aes(fill = perc_pub_assist)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent) +
   labs(fill = "Percent Public Assistance") +
@@ -66,7 +92,7 @@ ggplot(newdata, aes(fill = perc_pub_assist)) +
 
 ```{r}
 #total elementary/secondary revenue
-ggplot(newdata, aes(fill = TOTALRE)) + 
+ggplot(data, aes(fill = TOTALRE)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
   labs(fill = "Elementary/Secondary Revenue") +
