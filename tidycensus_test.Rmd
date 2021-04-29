@@ -23,7 +23,7 @@ Make sure you don't push with your key in plain sight!
 #in geography you can put us, region, state, county, school district (elementary, secondary, unified)
 
 #to see variables
-View(load_variables(year = 2019, "acs5", cache = TRUE))
+#View(load_variables(year = 2019, "acs5", cache = TRUE))
 ```
 
 
@@ -152,85 +152,8 @@ act %>%
 act_clean
 ```
 
-#Making a dataset with relevant census variables
+# making a dataset with THE CORRECT relevant Census variables
 ```{r}
-
-mn_2019_census <- get_acs(state = "MN", 
-                         geography = "school district (unified)",
-                         variables = c("B01003_001",
-                                       "B01001_004",
-                                       "B01001_005",
-                                       "B01001_006",
-                                       "B02001_002",
-                                       "B02001_003",
-                                       "B02001_005",
-                                       "B02001_006",
-                                       "B02001_008",
-                                       "B19013_001",
-                                       "B09010_001", 
-                                       "B25031_001",
-                                       "B25027_001",
-                                       "B28003_001"),
-                         geometry = TRUE,
-                         year = 2019)
-
-mn_2019_census_nogeom <- mn_2019_census %>%
-  select(-`moe`) %>% #get rid of moe variable(not sure what it is)
-  spread(variable, estimate) %>% #give each variable a column
-  rename(total_pop = B01003_001,
-         male_5to9 = B01001_004,
-         male_10to14 = B01001_005,
-         male_15to17 = B01001_006,
-         race_white_only = B02001_002,
-         race_Black_only = B02001_003,
-         race_Asian_only = B02001_005,
-         race_pacific_islander_only = B02001_006,
-         at_least_two_races = B02001_008,
-         med_household_inc_12mo = B19013_001,
-         SSI_pubassist_foodstamps = B09010_001,
-         med_gross_rent = B25031_001,
-         house_units_w_mortgage = B25027_001,
-         comp_internet_subscrip_in_house = B28003_001
-         ) %>% #rename variables
-  mutate(District = str_extract(`NAME`, "[^,]+")) %>% #delete ", Minnesota" after district name
-  select(-NAME)#remove `NAME` column
-  
-
-mn_2019_census_nogeom
-
-```
-
-#load dataset with district numbers
-```{r}
-districts <- read_csv("districts.csv")
-
-districts <- districts %>%
-  mutate(District = `District Name`) %>%
-  select(-`X3`, - `District Name`)
-```
-#join so that census dataset has district numbers
-```{r}
-mn_2019_census_nogeom <- mn_2019_census_nogeom %>%
-  left_join(districts)
-
-mn_2019_census_nogeom
-
-#the only NA value is for the "remainder of Minnesota"- should we get rid of this row anyways because it's not a school district?
-colSums(is.na(mn_2019_census_nogeom))
-```
-
-```{r}
-write.csv(act_clean, "act_clean.csv")
-# write.csv(mn_2019_census_nogeom, "mn_2019_census.csv")
-st_write(mn_2019_census_nogeom, "mn_2019_census/mn_2019_census.shp", 
-         append=FALSE, 
-         fid_column_name = "geometry")
-```
-
-# correct variables:
-```{r}
-#Making a dataset with relevant census variables
-
 mn_2019_census <- get_acs(state = "MN", 
                          geography = "school district (unified)",
                          variables = c("B01003_001",
@@ -287,11 +210,34 @@ mn_2019_census_nogeom <- mn_2019_census %>%
          perc_house_units_w_mortgage = house_units_w_mortgage/B25027_001,
          perc_internet_subscription = internet_subscrip_in_house/B28002_001
          ) %>% #create percentage variables
-  select(- ) #deselect variables used to calculate % but aren't important for our visualizations
-  
+  select(-B01001_001,-B02001_001, -B09010_001, -B25027_001, -B28002_001 ) #deselect variables used to calculate % but aren't important for our visualizations
+```
 
-View(mn_2019_census_nogeom)
+#load dataset with district numbers
+```{r}
+districts <- read_csv("districts.csv")
 
+districts <- districts %>%
+  mutate(District = `District Name`) %>%
+  select(-`X3`, - `District Name`)
+```
+#join so that census dataset has district numbers
+```{r}
+mn_2019_census_nogeom <- mn_2019_census_nogeom %>%
+  left_join(districts)
+
+mn_2019_census_nogeom
+
+#the only NA value is for the "remainder of Minnesota"- should we get rid of this row anyways because it's not a school district?
+colSums(is.na(mn_2019_census_nogeom))
+```
+
+```{r}
+write.csv(act_clean, "act_clean.csv")
+# write.csv(mn_2019_census_nogeom, "mn_2019_census.csv")
+st_write(mn_2019_census_nogeom, "mn_2019_census/mn_2019_census.shp", 
+         append=FALSE, 
+         fid_column_name = "geometry")
 ```
 
 
