@@ -29,7 +29,11 @@ names(mn_acs) <- c("GEOID", "male_5to9", "male_10to14", "male_15to17",
                    "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
                    "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
                    "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
-                   "comp_internet_subscrip_in_house", "District", "District.Nbr", "geometry")
+                   "internet_subscrip_in_house", "District", "perc_male_5to9", "perc_male_10to14",
+                   "perc_male_15to17", "perc_white_only", "perc_black_only", "perc_asian_only",
+                   "perc_pacific_islander_only", "perc_at_least_two_races", "perc_SSI_pubassist_foodstamps",
+                   "perc_house_units_w_mortgage", "perc_internet_subscription",
+                   "District.Nbr", "geometry")
 # move the district name and number cols to the front
 mn_acs <- mn_acs %>%
   relocate(District, District.Nbr, .after = GEOID)
@@ -82,7 +86,7 @@ ss %>%
   anti_join(mn_acs, by = c("NCESID" = "GEOID"))
 ```
 
-So only the row "Remainder of Minnesota" from the ACS didn't have a match, which makes perfect sense. There are 67 school districts from the school survey that did not join to the ACS, but perhaps they fall into the "Remainder of Minnesota" category.
+So only the row "Remainder of Minnesota" from the ACS didn't have a match, which makes perfect sense. There are 67 school districts from the school survey that did not join to the ACS, but perhaps they fall into the "Remainder of Minnesota" category. A lot of these districts also had 0 for enrollment.
 
 To join this dataset with the ACT data, we'll have to use the school district numbers as the ACT data does not contain the NCES ID.
 
@@ -115,7 +119,7 @@ mn_acs_ss_act <- mn_acs_ss_act %>%
 Export the data:
 
 ```{r}
-write.csv(mn_acs_ss_act, "mn_acs_ss_act.csv")
+#write.csv(mn_acs_ss_act, "mn_acs_ss_act.csv")
 ```
 
 ```{r}
@@ -126,14 +130,18 @@ st_write(mn_acs_ss_act, "mn_acs_ss_act/mn_acs_ss_act.shp",
 
 ```{r eval=FALSE}
 ##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
-data <- st_read("mn_acs_ss_act/mn_acs_ss_act.shp",
+mn_acs_ss_act <- st_read("mn_acs_ss_act/mn_acs_ss_act.shp",
                 geometry_column = "geometry",
                 fid_column_name = "geometry")
 # rename the census variables because their names were reformatted...
-names(data)[1:17] <- c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
-                       "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
-                       "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
-                       "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
-                       "comp_internet_subscrip_in_house")
+names(mn_acs_ss_act)[1:28] <- 
+  c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
+    "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+    "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+    "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+    "internet_subscrip_in_house", "perc_male_5to9", "perc_male_10to14",
+    "perc_male_15to17", "perc_white_only", "perc_black_only", "perc_asian_only",
+    "perc_pacific_islander_only", "perc_at_least_two_races", "perc_SSI_pubassist_foodstamps",
+    "perc_house_units_w_mortgage", "perc_internet_subscription")
 ```
 

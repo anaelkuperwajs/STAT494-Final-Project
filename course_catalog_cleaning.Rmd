@@ -11,15 +11,19 @@ course_catalog <- read_csv("course_catalog.csv")
 
 ```{r eval=FALSE}
 ##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
-data <- st_read("mn_acs_ss_act/mn_acs_ss_act.shp",
+mn_acs_ss_act <- st_read("mn_acs_ss_act/mn_acs_ss_act.shp",
                 geometry_column = "geometry",
                 fid_column_name = "geometry")
 # rename the census variables because their names were reformatted...
-names(data)[1:17] <- c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
-                       "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
-                       "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
-                       "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
-                       "comp_internet_subscrip_in_house")
+names(mn_acs_ss_act)[1:28] <- 
+  c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
+    "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+    "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+    "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+    "internet_subscrip_in_house", "perc_male_5to9", "perc_male_10to14",
+    "perc_male_15to17", "perc_white_only", "perc_black_only", "perc_asian_only",
+    "perc_pacific_islander_only", "perc_at_least_two_races", "perc_SSI_pubassist_foodstamps",
+    "perc_house_units_w_mortgage", "perc_internet_subscription")
 ``` 
 
 ```{r}
@@ -38,26 +42,28 @@ write.csv(course_catalog_predictors, "course_catalog_predictors.csv")
 Join with predictor data, replace all missing data from the course catalog with 0, and remove the redundant variable.
 ```{r}
 mn_acs_ss_act_pred <- mn_acs_ss_act %>%
-  mutate(District.Nbr = as.integer(District.Nbr)) %>%
-  full_join(course_catalog_predictors, by = c("District.Nbr" = "DistNum")) %>% 
+  # mutate(District.Nbr = as.integer(District.Nbr)) %>% ## no longer necessary since they're already ints
+  ## changed to left join to ignore rows without matches from the course catalog
+  left_join(course_catalog_predictors, by = c("District.Nbr" = "DistNum")) %>% 
   mutate(TotalClasses = ifelse(is.na(TotalClasses), 0, TotalClasses),
          NumCat = ifelse(is.na(NumCat), 0, NumCat)) 
 ```
 
 Alter variables for modeling purposes
 ```{r}
-mn_acs_ss_act_pred <- 
-  mn_acs_ss_act_pred %>% 
-  mutate(percent_white = race_white_only/total_pop) %>%
-  mutate(percent_black = race_Black_only/total_pop) %>%
-  mutate(perc_internet_sub = comp_internet_subscrip_in_house/total_pop) %>%
-  mutate(perc_pub_assist = SSI_pubassist_foodstamps/total_pop)
+## COMMENTED THIS OUT BECAUSE THESE VARS WERE ALREADY CREATED IN TIDYCENSUS_TEST
+# mn_acs_ss_act_pred <- 
+#   mn_acs_ss_act_pred %>% 
+#   mutate(percent_white = race_white_only/total_pop) %>%
+#   mutate(percent_black = race_Black_only/total_pop) %>%
+#   mutate(perc_internet_sub = comp_internet_subscrip_in_house/total_pop) %>%
+#   mutate(perc_pub_assist = SSI_pubassist_foodstamps/total_pop)
 ```
 
 
 Export Data
 ```{r}
-write.csv(mn_acs_ss_act_pred, "mn_acs_ss_act_pred.csv")
+#write.csv(mn_acs_ss_act_pred, "mn_acs_ss_act_pred.csv")
 ```
 
 ```{r}
@@ -68,16 +74,19 @@ st_write(mn_acs_ss_act_pred, "mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
 
 ```{r eval=FALSE}
 ##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
-data <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
+mn_acs_ss_act_pred <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
                 geometry_column = "geometry",
                 fid_column_name = "geometry")
-# rename variables that were renamed weirdly when exported as shapefile
-names(data)[1:17] <- c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
-                       "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
-                       "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
-                       "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
-                       "comp_internet_subscrip_in_house")
-names(data)[82] <- c("TotalClasses")
-names(data)[84:87] <- c("perc_white", "perc_black", "perc_internet_sub", "perc_pub_assist")
+# rename the census variables because their names were reformatted...
+names(mn_acs_ss_act_pred)[1:28] <- 
+  c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
+    "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+    "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+    "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+    "internet_subscrip_in_house", "perc_male_5to9", "perc_male_10to14",
+    "perc_male_15to17", "perc_white_only", "perc_black_only", "perc_asian_only",
+    "perc_pacific_islander_only", "perc_at_least_two_races", "perc_SSI_pubassist_foodstamps",
+    "perc_house_units_w_mortgage", "perc_internet_subscription")
+names(mn_acs_ss_act_pred)[93] <- c("TotalClasses")
 ```
 
