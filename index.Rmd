@@ -4,3 +4,35 @@ output: html_document
 ---
 
 Welcome to our final project!
+
+Section 1: intro to topic
+- plotly visualization cs course variety
+- plotly visualization cs course amount
+
+Section 2: intro to other datasets and visualizations
+- ACT map
+- total revenue
+- White population map
+- internet subscription map
+- median household income map
+
+TODO:
+- district population map
+- total spending (PPCSTOT, total spending per student)
+- perc_asian_only, FEDRNUT (funding from child nutrition act), LOCROTH, TEMPBEN (employee benefits), TCURSSC
+
+Section 3: visualizations or graphs/tables that show connections between cs catalogue data and other datasets
+
+TODO:
+- course amount vs any of section 2 variables
+- course variety vs any of section 2 variables
+- compare two districts: Red Lake and St. Paul
+
+Section 4: Model
+- use variables to predict cs course amount per district
+
+TODO:
+- variable importance plot
+
+Section 5: data justice / ethics, implications of our work
+TODO: writeups

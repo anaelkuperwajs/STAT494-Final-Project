@@ -214,6 +214,4 @@ Although we knew our maps were sufficient, we wanted to add another element to o
 The goal of our model was to predict the number of computer science courses offered per district based on the variables from our ACS, ASSSF, and ACT data.
 
 
-# Challenges
-
-[Not sure if we need this category, but maybe we will want it!]
+# Future Work
