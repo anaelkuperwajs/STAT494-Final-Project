@@ -3,53 +3,103 @@ title: "model making"
 output: html_document
 ---
 
-```{r}
+```{r, eval = FALSE}
 library(tidyverse)
 library(sf)
+library(plotly)
 ```
+
 ```{r eval=FALSE}
 ##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
 mn_acs_ss_act_pred <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
                 geometry_column = "geometry",
                 fid_column_name = "geometry")
-```
-Run to make sure data isn't wonky
-```{r}
-View(mn_acs_ss_act_pred)
+# rename the census variables because their names were reformatted...
+names(mn_acs_ss_act_pred)[1:28] <- 
+  c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
+    "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+    "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+    "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+    "internet_subscrip_in_house", "perc_male_5to9", "perc_male_10to14",
+    "perc_male_15to17", "perc_white_only", "perc_black_only", "perc_asian_only",
+    "perc_pacific_islander_only", "perc_at_least_two_races", "perc_SSI_pubassist_foodstamps",
+    "perc_house_units_w_mortgage", "perc_internet_subscription")
+names(mn_acs_ss_act_pred)[93] <- c("TotalClasses")
 ```
 
 
+For Section 1:
 
 Visualizing Predictor Variables
 ```{r}
-mn_acs_ss_act_pred %>%
-  ggplot(aes(fill = TotalClasses, geometry = geometry)) + 
-  geom_sf(color = NA) + 
+mn_acs_ss_act_pred_viz <- 
+  mn_acs_ss_act_pred %>%  drop_na()
+
+ggplotly(
+  ggplot(mn_acs_ss_act_pred_viz) +
+  geom_sf(aes(fill = TotalClasses, text = paste(District)),  size = .1, color = "white") +
   scale_fill_viridis_c(option = "B") +
   labs(fill = "Total CS Courses Offered") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"))
+) 
 
-
-mn_acs_ss_act_pred %>%
-  ggplot(aes(fill = NumCat, geometry = geometry)) + 
-  geom_sf(color = NA) + 
+ggplotly(
+  ggplot(mn_acs_ss_act_pred_viz) +
+  geom_sf(aes(fill = NumCat, text = paste(District)),  size = .1, color = "white") +
   scale_fill_viridis_c(option = "B") +
   labs(fill = "Number of CS Course Categories Offered") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"))
+) 
+
 ```
 
-Connection Visualization Example
+For Section 3:
+
+Predictor variables with section 2 variables
+```{r}
+ggplotly(
+  ggplot(mn_acs_ss_act_pred_viz) +
+  geom_sf(aes(fill = TotalClasses, text = paste("Median Household Income: $", med_household_inc_12mo,
+                                                "<br>", "Percent with Internet Subscription at Home: ",
+                                                paste(round(100*perc_internet_subscription, 2), "%", sep=""),
+                                                "<br>", "Population: ", total_pop, 
+                                                "<br>", District)),  size = .1, color = "white") +
+  scale_fill_viridis_c(option = "B") +
+  labs(fill = "Total CS Courses Offered") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+) 
+
+ggplotly(
+  ggplot(mn_acs_ss_act_pred_viz) +
+  geom_sf(aes(fill = NumCat, text = paste("Total Revenue: $", TOTALRE,
+                                                "<br>", "Total Per Pupil Spending: $", PPCSTOT,
+                                                "<br>", "Population: ", total_pop, 
+                                                "<br>", District)),  size = .1, color = "white") +
+  scale_fill_viridis_c(option = "B") +
+  labs(fill = "Number of CS Course Categories Offered") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+) 
+```
+
+
+
+MISC
+Trying out connection visualizations
 ```{r}
 mn_acs_ss_act_pred$mid <- sf::st_centroid(mn_acs_ss_act_pred$geometry)
 
 mn_acs_ss_act_pred %>% 
 ggplot(aes(geometry = geometry)) +
   geom_sf(aes(fill = TotalClasses)) +
-  geom_sf(aes(geometry = mid, size = FEDRNUTR),  alpha = .2, color = "white", show.legend = "point") +
+  geom_sf(aes(geometry = mid, size = FEDRNUT),  alpha = .2, color = "white", show.legend = "point") +
   scale_size(range = c(0.5, 15)) +
   scale_fill_viridis_c(option = "B") +
   labs(fill = "Total CS Courses Offered") +
@@ -57,4 +107,5 @@ ggplot(aes(geometry = geometry)) +
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
         legend.key = element_rect(fill = "black"),)
+
 ```
