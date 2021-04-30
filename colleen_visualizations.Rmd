@@ -5,25 +5,34 @@ date: "4/23/2021"
 output: html_document
 ---
 
-```{r eval=TRUE}
-##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
-data <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
-                geometry_column = "geometry",
-                fid_column_name = "geometry")
-# rename variables that were renamed weirdly when exported as shapefile
-names(data)[1:17] <- c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
-                       "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
-                       "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
-                       "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
-                       "comp_internet_subscrip_in_house")
-names(data)[82] <- c("TotalClasses")
-names(data)[84:87] <- c("perc_white", "perc_black", "perc_internet_sub", "perc_pub_assist")
-
-head(data)
+```{r}
+library(tidyverse)
+library(sf)
 ```
 
 
 ```{r}
+##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
+data <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
+                geometry_column = "geometry",
+                fid_column_name = "geometry")
+# rename the census variables because their names were reformatted...
+names(data)[1:28] <- 
+  c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
+    "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+    "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+    "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+    "internet_subscrip_in_house", "perc_male_5to9", "perc_male_10to14",
+    "perc_male_15to17", "perc_white_only", "perc_black_only", "perc_asian_only",
+    "perc_pacific_islander_only", "perc_at_least_two_races", "perc_SSI_pubassist_foodstamps",
+    "perc_house_units_w_mortgage", "perc_internet_subscription")
+names(data)[93] <- c("TotalClasses")
+```
+
+
+```{r}
+#use this
+
 data %>%
   ggplot(aes(fill = med_household_inc_12mo)) + 
   geom_sf(color = NA) + 
@@ -36,18 +45,19 @@ data %>%
 
 ```{r}
 #percent race white only.... ok so MN is veryyyyyy white
-ggplot(data, aes(fill = perc_white)) + 
+ggplot(data, aes(fill = perc_white_only)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma") +
-  labs(fill = "Percentage of White People") +
+  labs(fill = "Proportion of White People") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"))
 ```
 
+
 ```{r}
 #percent race Black only
-ggplot(data, aes(fill = perc_black)) + 
+ggplot(data, aes(fill = perc_black_only)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma") +
   labs(fill = "Percentage of Black People") +
@@ -76,7 +86,7 @@ ggplot(data, aes(fill = med_gross_rent)) +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"))
-```
+``` 
 
 
 ```{r}
@@ -154,24 +164,6 @@ mn_2019_census_county <- mn_2019_census_county %>%
   select(-NAME)#remove `NAME` column
 ```
 
-#trying some by county
-```{r}
-bycounty_new <- mn_2019_census_county %>%
-  mutate(percent_white = race_white_only/total_pop) %>%
-  mutate(percent_black = race_Black_only/total_pop) %>%
-  mutate(perc_internet_sub = comp_internet_subscrip_in_house/total_pop) %>%
-  mutate(perc_pub_assist = SSI_pubassist_foodstamps/total_pop)
-
-
-#percent race white only.... ok so MN is veryyyyyy white
-ggplot(bycounty_new, aes(fill = percent_white)) + 
-  geom_sf(color = NA) + 
-  scale_fill_viridis_c(option = "magma") +
-  labs(fill = "Percentage of White People") +
-  theme(axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
-```
 
 ```{r}
 #percent of ppl that have computer and internet subscription in household
