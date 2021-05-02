@@ -1,0 +1,10 @@
+navbar:
+  title: Advanced Data Science Final Project
+  left:
+  - text: "Home"
+    href: index.html
+output:
+  html_document:
+    theme: journal
+    toc: true
+    toc_float: true
