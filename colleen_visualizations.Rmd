@@ -164,7 +164,7 @@ ggplot(st_paul_pub_school) +
   geom_sf_text(aes(label = "Population: 304,547"), nudge_y = 0.043) +
   geom_sf_text(aes(label = "Perc. White People: 56.96%"), nudge_y = 0.032) +
   geom_sf_text(aes(label = "Median Household Income: $57,876"), nudge_y = 0.021) +
-  geom_sf_text(aes(label = "Perc. w/ Internet Subscription: 59.9%"), nudge_y = 0.01) +
+  geom_sf_text(aes(label = "Perc. w/ Internet Subscription: 85.6%"), nudge_y = 0.01) +
   geom_sf_text(aes(label = "Perc. Receiving Govt. Assist.: 37.87%"), nudge_y = 0)
 ```
 
