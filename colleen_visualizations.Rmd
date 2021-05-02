@@ -60,15 +60,27 @@ ggplot(data, aes(fill = perc_white_only)) +
 ggplot(data, aes(fill = perc_black_only)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma") +
-  labs(fill = "Percentage of Black People") +
+  labs(fill = "Proportion of Black People") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"))
+```
+```{r}
+#total population of district
+
+ggplot(data, aes(fill = total_pop)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::label_comma()) +
+  labs(fill = "Total Population") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"))
 ```
 
+
 ```{r}
 #percent of ppl that have computer and internet subscription in household
-ggplot(data, aes(fill = perc_internet_sub)) + 
+ggplot(data, aes(fill = perc_internet_subscription)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent) +
   labs(fill = "Percent Internet Subscription") +
@@ -91,7 +103,7 @@ ggplot(data, aes(fill = med_gross_rent)) +
 
 ```{r}
 #percent of ppl that receive food stamps or SSI or public assistance
-ggplot(data, aes(fill = perc_pub_assist)) + 
+ggplot(data, aes(fill = perc_SSI_pubassist_foodstamps)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent) +
   labs(fill = "Percent Public Assistance") +
@@ -105,10 +117,11 @@ ggplot(data, aes(fill = perc_pub_assist)) +
 ggplot(data, aes(fill = TOTALRE)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
-  labs(fill = "Elementary/Secondary Revenue") +
+  labs(fill = "Revenue") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
+        panel.background = element_rect(fill = "white")) +
+  ggtitle("Elementary/Secondary School Revenue by District")
 ```
 
 ```{r}
@@ -116,64 +129,56 @@ ggplot(data, aes(fill = TOTALRE)) +
 ggplot(data, aes(fill = Avg_Cmp)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma") +
-  labs(fill = "Average ACT Composite Score") +
+  labs(fill = "Average Score") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
+        panel.background = element_rect(fill = "white")) +
+  ggtitle("Average Composite ACT Score by District")
+```
+
+#filter by district
+```{r}
+st_paul_pub_school <- data %>%
+  filter(District == "St. Paul Public School District")
+
+red_lake_pub_school <- data %>%
+  filter(District == "Red Lake Public School District")
 ```
 
 ```{r}
-mn_2019_census_county <- get_acs(state = "MN", 
-                         geography = "county",
-                         variables = c("B01003_001",
-                                       "B01001_004",
-                                       "B01001_005",
-                                       "B01001_006",
-                                       "B02001_002",
-                                       "B02001_003",
-                                       "B02001_005",
-                                       "B02001_006",
-                                       "B02001_008",
-                                       "B19013_001",
-                                       "B09010_001", 
-                                       "B25031_001",
-                                       "B25027_001",
-                                       "B28003_001"),
-                         geometry = TRUE,
-                         year = 2019)
-
-mn_2019_census_county <- mn_2019_census_county %>%
-  select(-`moe`) %>% #get rid of moe variable(not sure what it is)
-  spread(variable, estimate) %>% #give each variable a column
-  rename(total_pop = B01003_001,
-         male_5to9 = B01001_004,
-         male_10to14 = B01001_005,
-         male_15to17 = B01001_006,
-         race_white_only = B02001_002,
-         race_Black_only = B02001_003,
-         race_Asian_only = B02001_005,
-         race_pacific_islander_only = B02001_006,
-         at_least_two_races = B02001_008,
-         med_household_inc_12mo = B19013_001,
-         SSI_pubassist_foodstamps = B09010_001,
-         med_gross_rent = B25031_001,
-         house_units_w_mortgage = B25027_001,
-         comp_internet_subscrip_in_house = B28003_001
-         ) %>% #rename variables
-  mutate(District = str_extract(`NAME`, "[^,]+")) %>% #delete ", Minnesota" after district name
-  select(-NAME)#remove `NAME` column
+ggplot(red_lake_pub_school) + 
+  geom_sf(color = "magenta") +
+  ggtitle("Red Lake Public School District Profile") +
+  geom_sf_text(aes(label = "Population: 5,815"), nudge_y = 0.14) +
+  geom_sf_text(aes(label = "Perc. White People: 2.18%"), nudge_y = 0.09) +
+  geom_sf_text(aes(label = "Median Household Income: $39,676"), nudge_y = 0.04) +
+  geom_sf_text(aes(label = "Perc. w/ Internet Subscription: 59.9%"), nudge_y = -0.01) +
+  geom_sf_text(aes(label = "Perc. Receiving Govt. Assist.: 67.22%"), nudge_y = -0.06)
 ```
 
+```{r}
+ggplot(st_paul_pub_school) + 
+  geom_sf(color = "purple") +
+  ggtitle("St. Paul Public School District Profile") +
+  coord_sf(ylim = c(44.88,45.00)) +
+  geom_sf_text(aes(label = "Population: 304,547"), nudge_y = 0.043) +
+  geom_sf_text(aes(label = "Perc. White People: 56.96%"), nudge_y = 0.032) +
+  geom_sf_text(aes(label = "Median Household Income: $57,876"), nudge_y = 0.021) +
+  geom_sf_text(aes(label = "Perc. w/ Internet Subscription: 59.9%"), nudge_y = 0.01) +
+  geom_sf_text(aes(label = "Perc. Receiving Govt. Assist.: 37.87%"), nudge_y = 0)
+```
 
 ```{r}
-#percent of ppl that have computer and internet subscription in household
-ggplot(bycounty_new, aes(fill = perc_internet_sub)) + 
-  geom_sf(color = NA) + 
-  scale_fill_viridis_c(option = "magma", labels = scales::percent) +
-  labs(fill = "Percent Internet Subscription") +
+data %>%
+  mutate(highlighted_districts = ifelse(District == "Red Lake Public School District" | District == "St. Paul Public School District", "yes", "no")) %>%
+  ggplot(aes(fill = highlighted_districts)) +
+  geom_sf(color = "black", size = 0.2) +
+  scale_fill_manual(values = c("beige","maroon4")) +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
+        legend.position = "none",
+        panel.background = element_rect(fill = "white")) +
+  ggtitle("Profile of Two Minnesota School Districts") #change title?
 ```
 
 
