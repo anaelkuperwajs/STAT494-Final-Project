@@ -62,5 +62,7 @@ TODO: writeups
 
 
 For more information about how we created this project, please visit:
+
 GitHub: https://github.com/anaelkuperwajs/STAT494-Final-Project
+
 Behind the scenes: https://github.com/anaelkuperwajs/STAT494-Final-Project/blob/main/behind_the_scenes.Rmd
