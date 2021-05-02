@@ -1,15 +1,30 @@
 ---
 title: "Advanced Data Science Final Project"
+author: "Anael Kuperwajs Cohen, Colleen Minnihan, Hayley Hadges, Thy Nguyen"
+date: "5/05/2021"
 output: html_document
 ---
 
-Welcome to our final project!
+Welcome to our final project! We are Macalester College students (class of 2021/2022) from the department of Mathematics, Statistics, and Computer Science. We took the course Advanced Data Science in R (STAT 494) during spring semester, 2021. Below is our final project for this course.
 
-Section 1: intro to topic
+
+# Introduction
+
+Computer Science is a field that is growing rapidly in the United States and around the world today. Advancements in computer science from industry are constantly being released and technology is becoming more ingrained into our daily lives. The increasing demand of computer scientists had caused the occupation to grow in popularity. To meet the demand, educational institutions and systems are increasing the amount of courses offered in order to train more future computer scientists. This development started at the college level, where majoring in computer science is becoming a widely available option. At Macalester College, it is one of the largest departments for both students and faculty. While the availability of courses at the college level is an amazing start, there is a big push to have computer sciences courses offered in K-12 education. Offering computer science courses in elementary and secondary schools provides an opportunity for kids to expose themselves to coding. This could lead younger students to discover new interests and get engaged with computer science earlier. Often, being exposed to computer science at a younger age can make students more comfortable with the material and the field later on. This can lead to a more empowered and diverse set of students entering the workforce or higher education. Given the importance of having computer science courses available in K-12 education, we decided to explore the availability of computer science courses in K-12 school districts in Minnesota. For our Advanced Data Science final project, we will explore the connection between a variety of datasets relate to this topic, including K-12 computer science course availability in Minnesota, demographic information from the U.S. census, ACT scores, and funding.
+
+
+# Computer Science K-12 Course Availability in Minnesota
+
+To begin with, let's explore what computer science course availability already exists in the state of Minnesota for K-12 education. The two plots below show the various public school districts in the state and the amount and variety of computer science courses offered in each district.
+
 - plotly visualization cs course variety
 - plotly visualization cs course amount
 
-Section 2: intro to other datasets and visualizations
+
+# Demographics, ACT Scores, and Funding
+
+Due to the fact that public schools are funded by property taxes, course availability is usually an intersectional issue that is reliant on other factors. We hypothesized that there would be a correlation between course availability and wealth and access to resources. In this section we explore some of the variables we expected to be important in relation to course availability.
+
 - ACT map
 - total revenue
 - White population map
@@ -21,18 +36,27 @@ TODO:
 - total spending (PPCSTOT, total spending per student)
 - perc_asian_only, FEDRNUT (funding from child nutrition act), LOCROTH, TEMPBEN (employee benefits), TCURSSC
 
-Section 3: visualizations or graphs/tables that show connections between cs catalogue data and other datasets
+
+# Connections
+
+Now that we have introduced you to our various datasets, we will show you how these connect and see if there is a correlation between course availability and demographic variables, ACT scores, and funding.
 
 TODO:
 - course amount vs any of section 2 variables
 - course variety vs any of section 2 variables
 - compare two districts: Red Lake and St. Paul
 
-Section 4: Model
+
+# Modeling Computer Science K-12 Course Availability in Minnesota
+
+To understand what factors have the largest influence on course availability, we created a model to predict the amount of computer science courses per district in the state of Minnesota.
+
 - use variables to predict cs course amount per district
 
 TODO:
 - variable importance plot
 
-Section 5: data justice / ethics, implications of our work
+
+# Implications
 TODO: writeups
+
