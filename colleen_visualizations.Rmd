@@ -5,6 +5,7 @@ date: "4/23/2021"
 output: html_document
 ---
 
+
 ```{r}
 library(tidyverse)
 library(sf)
@@ -29,112 +30,199 @@ names(data)[1:28] <-
 names(data)[93] <- c("TotalClasses")
 ```
 
+```{r}
+#population
+Population <-
+ggplot(data, aes(fill = total_pop)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::comma) +
+  labs(title = "Total Population", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
 
 ```{r}
 #use this
-
+Household_Income <-
 data %>%
   ggplot(aes(fill = med_household_inc_12mo)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
-  labs(fill = "Median Household Income") +
+  labs(title = "Median Household Income", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
 ```
 
 ```{r}
 #percent race white only.... ok so MN is veryyyyyy white
+Percent_White <-
 ggplot(data, aes(fill = perc_white_only)) + 
   geom_sf(color = NA) + 
-  scale_fill_viridis_c(option = "magma") +
-  labs(fill = "Proportion of White People") +
+  scale_fill_viridis_c(option = "magma", labels = scales::percent) +
+  labs(title = "Percent of White People", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
 ```
 
 
 ```{r}
 #percent race Black only
+Percent_Black <-
 ggplot(data, aes(fill = perc_black_only)) + 
   geom_sf(color = NA) + 
-  scale_fill_viridis_c(option = "magma") +
-  labs(fill = "Proportion of Black People") +
+  scale_fill_viridis_c(option = "magma", labels = scales::percent) +
+  labs(title = "Percent of Black People", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
 ```
+
 ```{r}
-#total population of district
-
-ggplot(data, aes(fill = total_pop)) + 
+#percent asian only
+Percent_Asian <-
+ggplot(data, aes(fill = perc_asian_only)) + 
   geom_sf(color = NA) + 
-  scale_fill_viridis_c(option = "magma", labels = scales::label_comma()) +
-  labs(fill = "Total Population") +
+  scale_fill_viridis_c(option = "magma", labels = scales::percent_format(accuracy = 5L)) +
+  labs(title = "Percent of Asian People", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
 ```
-
 
 ```{r}
 #percent of ppl that have computer and internet subscription in household
+Percent_Internet_Sub <-
 ggplot(data, aes(fill = perc_internet_subscription)) + 
   geom_sf(color = NA) + 
-  scale_fill_viridis_c(option = "magma", labels = scales::percent) +
-  labs(fill = "Percent Internet Subscription") +
+  scale_fill_viridis_c(option = "magma", labels = scales::percent_format(accuracy = 5L)) +
+  labs(title = "Percent Internet Subscription", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
 ```
 
 ```{r}
 #median gross rent
+Gross_Rent <-
 ggplot(data, aes(fill = med_gross_rent)) + 
   geom_sf(color = NA) + 
-  scale_fill_viridis_c(option = "magma") +
-  labs(fill = "Median Gross Rent", labels = scales::dollar) +
+  scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
+  labs(title = "Median Gross Rent", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
 ``` 
 
 
 ```{r}
 #percent of ppl that receive food stamps or SSI or public assistance
+Percent_Public_Assistance <-
 ggplot(data, aes(fill = perc_SSI_pubassist_foodstamps)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent) +
-  labs(fill = "Percent Public Assistance") +
+  labs(title = "Percent Public Assistance", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
 ```
 
 ```{r}
 #total elementary/secondary revenue
+Revenue <-
 ggplot(data, aes(fill = TOTALRE)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
-  labs(fill = "Revenue") +
+  labs(title = "Total Revenue", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white")) +
-  ggtitle("Elementary/Secondary School Revenue by District")
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+#total expenditure
+Expenditure <-
+ggplot(data, aes(fill = TOTALEX)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
+  labs(title = "Total Expenditure", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+#other local revenues
+Local_Revenues <-
+ggplot(data, aes(fill = LOCROTH)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
+  labs(title = "Other Local Revenues", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
 ```
 
 ```{r}
 #average composite ACT score
+ACT <-
 ggplot(data, aes(fill = Avg_Cmp)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma") +
-  labs(fill = "Average Score") +
+  labs(title = "Average ACT Composite Score", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white")) +
-  ggtitle("Average Composite ACT Score by District")
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
 ```
+
+```{r}
+Per_Pupil_Spending <-
+  ggplot(data, aes(fill = PPCSTOT)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "B", labels = scales::dollar) +
+  labs(title = "Per Pupil Total Spending", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+#total current spending for support services
+Support_Spending <-
+ggplot(data, aes(fill = TCURSSC)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma") +
+  labs(title = "Total Spending for Support Services", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r, fig.width=14, fig.height=14}
+#Some of these maps look incredibly identical
+grid.arrange(Population, Percent_White, Percent_Black, Percent_Asian, 
+             Household_Income, Gross_Rent, Percent_Public_Assistance, Percent_Internet_Sub,
+             Per_Pupil_Spending, Revenue, Expenditure, Support_Spending, Local_Revenues,
+             ACT, nrow = 5)
+```
+
+
 
 #filter by district
 ```{r}
