@@ -39,20 +39,24 @@ ggplotly(
   ggplot(mn_acs_ss_act_pred_viz) +
   geom_sf(aes(fill = TotalClasses, text = paste(District)),  size = .1, color = "white") +
   scale_fill_viridis_c(option = "B") +
-  labs(fill = "Total CS Courses Offered") +
+  labs(title = "Total CS Courses Offered", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5),
+        title =element_text(size=12, face='bold'))
 ) 
 
 ggplotly(
   ggplot(mn_acs_ss_act_pred_viz) +
   geom_sf(aes(fill = NumCat, text = paste(District)),  size = .1, color = "white") +
   scale_fill_viridis_c(option = "B") +
-  labs(fill = "Number of CS Course Categories Offered") +
+  labs(title = "Number of CS Course Categories Offered", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5),
+        title =element_text(size=12, face='bold'))
 ) 
 
 ```
@@ -61,19 +65,23 @@ For Section 3:
 
 Predictor variables with section 2 variables
 ```{r}
+#Should I add subtitles or change the titles?
 ggplotly(
   ggplot(mn_acs_ss_act_pred_viz) +
   geom_sf(aes(fill = TotalClasses, text = paste("Median Household Income: $", med_household_inc_12mo,
-                                                "<br>", "Percent with Internet Subscription at Home: ",
-                                                paste(round(100*perc_internet_subscription, 2), "%", sep=""),
+                                                "<br>", "Percentage of White People: ",
+                                                paste(round(100*perc_white_only, 2), "%", sep=""),
                                                 "<br>", "Population: ", total_pop, 
                                                 "<br>", District)),  size = .1, color = "white") +
   scale_fill_viridis_c(option = "B") +
-  labs(fill = "Total CS Courses Offered") +
+  labs(title = "District Profiles Colored by Total CS Courses Offered", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
-) 
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5),
+        title =element_text(size=12, face='bold'))
+)
+
 
 ggplotly(
   ggplot(mn_acs_ss_act_pred_viz) +
@@ -82,10 +90,12 @@ ggplotly(
                                                 "<br>", "Population: ", total_pop, 
                                                 "<br>", District)),  size = .1, color = "white") +
   scale_fill_viridis_c(option = "B") +
-  labs(fill = "Number of CS Course Categories Offered") +
+  labs(title = "District Profiles Colored by Number of CS Course Categories Offered", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"))
+        panel.background = element_rect(fill = "white"),
+         plot.title = element_text(hjust = 0.5),
+         title =element_text(size=12, face='bold'))
 ) 
 ```
 

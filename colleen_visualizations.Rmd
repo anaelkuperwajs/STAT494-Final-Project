@@ -218,9 +218,9 @@ ggplot(data, aes(fill = TCURSSC)) +
 ```{r, fig.width=14, fig.height=14}
 #Some of these maps look incredibly identical
 grid.arrange(Population, Percent_White, Percent_Black, Percent_Asian, 
-             Household_Income, Gross_Rent, Percent_Public_Assistance, Percent_Internet_Sub,
-             Per_Pupil_Spending, Revenue, Expenditure, Support_Spending, Local_Revenues,
-             ACT, nrow = 5)
+             Household_Income, Percent_Public_Assistance, Percent_Internet_Sub,
+             Per_Pupil_Spending, Revenue, 
+             ACT, nrow = 4)
 ```
 
 
@@ -242,7 +242,13 @@ ggplot(red_lake_pub_school) +
   geom_sf_text(aes(label = "Perc. White People: 2.18%"), nudge_y = 0.09) +
   geom_sf_text(aes(label = "Median Household Income: $39,676"), nudge_y = 0.04) +
   geom_sf_text(aes(label = "Perc. w/ Internet Subscription: 59.9%"), nudge_y = -0.01) +
-  geom_sf_text(aes(label = "Perc. Receiving Govt. Assist.: 67.22%"), nudge_y = -0.06)
+  geom_sf_text(aes(label = "Perc. Receiving Govt. Assist.: 67.22%"), nudge_y = -0.06) +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5),
+        title = element_text(size=12, face='bold'))
 ```
 
 ```{r}
@@ -254,7 +260,13 @@ ggplot(st_paul_pub_school) +
   geom_sf_text(aes(label = "Perc. White People: 56.96%"), nudge_y = 0.032) +
   geom_sf_text(aes(label = "Median Household Income: $57,876"), nudge_y = 0.021) +
   geom_sf_text(aes(label = "Perc. w/ Internet Subscription: 85.6%"), nudge_y = 0.01) +
-  geom_sf_text(aes(label = "Perc. Receiving Govt. Assist.: 37.87%"), nudge_y = 0)
+  geom_sf_text(aes(label = "Perc. Receiving Govt. Assist.: 37.87%"), nudge_y = 0) +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5),
+        title = element_text(size=12, face='bold'))
 ```
 
 ```{r}
@@ -266,7 +278,8 @@ data %>%
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         legend.position = "none",
-        panel.background = element_rect(fill = "white")) +
+        panel.background = element_rect(fill = "white"),
+        title = element_text(size=12, face='bold')) +
   ggtitle("Profile of Two Minnesota School Districts") #change title?
 ```
 
