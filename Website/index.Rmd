@@ -122,7 +122,7 @@ Percent_White <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_white_only)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent) +
-  labs(title = "Percent of Population that is White", fill = "") +
+  labs(title = "Percent of Population that is only White", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -136,7 +136,7 @@ Percent_Black <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_black_only)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent) +
-  labs(title = "Percent of Population that is Black", fill = "") +
+  labs(title = "Percent of Population that is only Black", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -149,7 +149,7 @@ Percent_Asian <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_asian_only)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent_format(accuracy = 5L)) +
-  labs(title = "Percent of population that is Asian", fill = "") +
+  labs(title = "Percent of population that is only Asian", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -271,7 +271,7 @@ ggplotly(
 ) 
 ```
 
-ADD WRITING HERE
+We wanted to take a closer look at two Minnesota school districts that differ in number of computer science courses offered to see how they varied in demographics.  Below, we highlighted the two districts we will focus on for the subsequent comparisons: Red Lake Public School District (the larger district in northern Minnesota, located on the Red Lake Reservation) and St. Paul Public School District.  We chose these two particular districts because Red Lake Public School District had the lowest total number of Computer Science courses offered, while St. Paul Public School District had the highest.
 
 ```{r}
 st_paul_pub_school <- mn_acs_ss_act_pred %>%
@@ -295,17 +295,19 @@ mn_acs_ss_act_pred %>%
   ggtitle("Profile of Two Minnesota School Districts") #change title?
 ```
 
-ADD WRITING HERE
+From these two district profiles, one can see that not only does St. Paul Public School District have more course offerings and categories, but the percentage of people who are white, median household income, and percentage of people with internet subscriptions in there homes are a lot higher than in the Red Lake Public School District.  These comparisons help us confirm the notion that generational wealth and race are inherently linked to quality of public school education.
 
 ```{r}
 ggplot(red_lake_pub_school) + 
   geom_sf(color = "magenta") +
   ggtitle("Red Lake Public School District Profile") +
-  geom_sf_text(aes(label = "Population: 5,815"), nudge_y = 0.14) +
-  geom_sf_text(aes(label = "Perc. White People: 2.18%"), nudge_y = 0.09) +
-  geom_sf_text(aes(label = "Median Household Income: $39,676"), nudge_y = 0.04) +
-  geom_sf_text(aes(label = "Perc. w/ Internet Subscription: 59.9%"), nudge_y = -0.01) +
-  geom_sf_text(aes(label = "Perc. Receiving Govt. Assist.: 67.22%"), nudge_y = -0.06) +
+  geom_sf_text(aes(label = "Total CS Courses Offered: 6"), nudge_y = 0.14) +
+  geom_sf_text(aes(label = "Number of CS Course Categories: 2"), nudge_y = 0.09) +
+  geom_sf_text(aes(label = "Population: 5,815"), nudge_y = 0.04) +
+  geom_sf_text(aes(label = "Perc. White People: 2.18%"), nudge_y = -0.01) +
+  geom_sf_text(aes(label = "Median Household Income: $39,676"), nudge_y = -0.06) +
+  geom_sf_text(aes(label = "Perc. w/ Internet Subscription: 59.9%"), nudge_y = -0.11) +
+  geom_sf_text(aes(label = "Perc. Receiving Govt. Assist.: 67.22%"), nudge_y = -0.16) +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         axis.title = element_blank(),
@@ -319,11 +321,13 @@ ggplot(st_paul_pub_school) +
   geom_sf(color = "purple") +
   ggtitle("St. Paul Public School District Profile") +
   coord_sf(ylim = c(44.88,45.00)) +
-  geom_sf_text(aes(label = "Population: 304,547"), nudge_y = 0.043) +
-  geom_sf_text(aes(label = "Perc. White People: 56.96%"), nudge_y = 0.032) +
-  geom_sf_text(aes(label = "Median Household Income: $57,876"), nudge_y = 0.021) +
-  geom_sf_text(aes(label = "Perc. w/ Internet Subscription: 85.6%"), nudge_y = 0.01) +
-  geom_sf_text(aes(label = "Perc. Receiving Govt. Assist.: 37.87%"), nudge_y = 0) +
+  geom_sf_text(aes(label = "Total CS Courses Offered: 54"), nudge_y = 0.047) +
+  geom_sf_text(aes(label = "Number of CS Course Categories: 5"), nudge_y = 0.038) +
+  geom_sf_text(aes(label = "Population: 304,547"), nudge_y = 0.029) +
+  geom_sf_text(aes(label = "Perc. White People: 56.96%"), nudge_y = 0.02) +
+  geom_sf_text(aes(label = "Median Household Income: $57,876"), nudge_y = 0.011) +
+  geom_sf_text(aes(label = "Perc. w/ Internet Subscription: 85.6%"), nudge_y = 0.002) +
+  geom_sf_text(aes(label = "Perc. Receiving Govt. Assist.: 37.87%"), nudge_y = -0.007) +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         axis.title = element_blank(),
