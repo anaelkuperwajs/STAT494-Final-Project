@@ -1,0 +1,165 @@
+---
+title: "Modeling Writeup"
+author: "Thy Nguyen"
+date: "5/3/2021"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    self_contained: false
+draft: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r paged-table, echo=FALSE}
+library(knitr)
+knit_print.data.frame <- function(x, ...) {
+  asis_output(
+    rmarkdown:::paged_table_html(x, options = attr(x, "options")),
+    meta = list(dependencies = rmarkdown:::html_dependency_pagedtable())
+  )
+}
+registerS3method("knit_print", "data.frame", knit_print.data.frame)
+```
+
+```{r include=FALSE}
+library(tidyverse)
+library(tidymodels)
+library(naniar)
+library(sf)
+library(DALEX)
+library(DALEXtra)
+library(vip)
+```
+
+# Writeup
+
+To understand what factors have the largest influence on course availability, we created two models to predict the amount of computer science courses per district in the state of Minnesota. The first model was LASSO, a linear regression method that shrinks coefficients even to zero to eliminate insignificant variables. With over 80 possible predictors, it would be difficult to quantitatively select variables for ordinary least squares and including everything would lead to overfitting. The second one we fitted was a random forest. A random forest consists of a large number of decision trees and averages the prediction over these trees. 
+
+Before fitting the models, the main transformation we had to perform was log-transformation for many of the variables from the Annual Survey of School System Finances. These were raw tallies of revenue or expenditure, so the data were right-skewed with a few districts having significantly higher values than the majority. Based on the RMSE, the random forest greatly outperformed the LASSO, with an RMSE of approximately 1.86 compared to the LASSO's 4.11. 
+
+In a random forest model, some variables will have higher predictive power and contribute more to the outcome. Below is a plot ranking our predictors in terms of their importance:
+
+```{r data, include=FALSE}
+# read in the data
+mn <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
+              geometry_column = "geometry",
+              fid_column_name = "geometry")
+# rename the census variables because their names were reformatted...
+names(mn)[1:28] <- 
+  c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
+    "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+    "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+    "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+    "internet_subscrip_in_house", "perc_male_5to9", "perc_male_10to14",
+    "perc_male_15to17", "perc_white_only", "perc_black_only", "perc_asian_only",
+    "perc_pacific_islander_only", "perc_at_least_two_races", "perc_SSI_pubassist_foodstamps",
+    "perc_house_units_w_mortgage", "perc_internet_subscription")
+names(mn)[93] <- c("TotalClasses")
+# drop the geometry column and convert back to regular df so it's easier to work with
+mn <- mn %>%
+  st_drop_geometry()
+# remove NAs so we could fit rf without errors
+mn <- mn %>%
+  drop_na()
+```
+
+```{r split, include=FALSE}
+set.seed(21)
+# split the data into a training and test set
+mn_split <- initial_split(mn, prop = .75)
+mn_training <- training(mn_split)
+mn_testing <- testing(mn_split)
+# create cross-validation folds
+mn_cv <- vfold_cv(mn_training, v = 5)
+```
+
+```{r recipe, include=FALSE}
+mn_recipe <- 
+  recipe(TotalClasses ~ ., data = mn_training) %>%
+  # ignore observations with missing data (necessary for LASSO mod)
+  step_naomit(everything(), skip = TRUE) %>%
+  # remove variables
+  step_rm(
+    # this one can be considered as response variable itself
+    NumCat, 
+    # all variables have the same value for these two
+    PCTTOTA, LOCRPAR, 
+    # raw counts from ACS
+    matches("[a-z]", ignore.case = FALSE),
+    -starts_with("perc"),
+    -total_pop,
+    -Avg_Cmp,
+    -TotalClasses
+    ) %>%
+  # log-transform 
+  step_log(
+    # total population
+    total_pop,
+    # spending / revenue variables from the school survey
+    ## ignore those that start with P since they're percentages / spending per student
+    matches("^[A-OQ-Z]{4,}", ignore.case = FALSE), 
+    ## ignore ID variables as well
+    -GEOID, -CONUM, -CBSA,
+    # some variables have 0s which will produce NaNs when log-transformed
+    offset = 1) %>% 
+  # make ID variables evaluative (not included in modeling)
+  update_role(
+    all_of(c("GEOID",
+             "District",
+             "District.Nbr",
+             "CONUM",
+             "CSA",
+             "CBSA")),
+    new_role = "evaluative") %>%
+  # make integers numeric
+  step_mutate_at(is.integer, fn = as.numeric) %>%
+  # normalize numerical variables
+  step_normalize(all_predictors())
+```
+
+```{r model, include=FALSE}
+set.seed(21)
+# define the model type
+mn_rf_mod <- 
+  rand_forest(mtry = 23, # ~1/3 of predictors 
+              min_n = 5, 
+              trees = 200) %>% 
+  set_mode("regression") %>% 
+  set_engine("ranger")
+
+# set up the workflow
+mn_rf_wf <-
+  workflow() %>%
+  add_recipe(mn_recipe) %>%
+  add_model(mn_rf_mod)
+
+# fit the model
+mn_rf_fit <- 
+  mn_rf_wf %>% 
+  fit(mn_training)
+```
+
+```{r var-imp, include=FALSE}
+set.seed(1) 
+# create explainer
+rf_explain <- 
+  explain_tidymodels(
+    model = mn_rf_fit,
+    data = mn_training %>% select(-TotalClasses), 
+    y = mn_training %>%  pull(TotalClasses),
+    label = "rf"
+  )
+# compute variable importance
+rf_var_imp <- model_parts(rf_explain)
+```
+
+```{r plot, echo=FALSE, fig.align="center", fig.width=10, fig.height=9}
+# plot
+plot(rf_var_imp, show_boxplots = TRUE)
+```
+
+Each bar shows how much the RMSE would change if the corresponding variable was permuted. If permuting a certain variable significantly increases the RMSE relative to permuting other variables then it would be important. Here, the RMSE increases the most when revenue from the Child Nutrition Act, spending on instructional staff, and total expenditure are permuted. The highest-ranking variables all came from the School Survey, and the top 3 most important demographic variables from the ACS are percent of the total population who are black alone, percent of households with Internet subscription, and percent of households receiving SSI, public assistance, or foodstamps (in each district). The variables at the bottom showing no change in RMSE if permuted were excluded from the modeling right from the beginning as they are ID or raw demographic variables (for these we used their percentage version).
