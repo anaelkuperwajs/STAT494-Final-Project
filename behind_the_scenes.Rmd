@@ -46,12 +46,22 @@ Link: https://www.dhs.state.mn.us/main/groups/county_access/documents/pub/dhs16_
 
 #Important Packages and Datasets
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+options(scipen = 999)
+```
+
 ## Load Packages
 
 ```{r}
 library(tidycensus) # for getting the census data
 library(tidyverse) # for data cleaning and visualization
 library(sf) # for mapping
+library(tidymodels)
+library(naniar)
+library(DALEX)
+library(DALEXtra)
+library(vip)
 ```
 
 ## Load Datasets
@@ -210,6 +220,408 @@ Although we knew our maps were sufficient, we wanted to add another element to o
 # Modeling
 
 The goal of our model was to predict the number of computer science courses offered per district based on the variables from our ACS, ASSSF, and ACT data.
+
+```{r paged-table, echo=FALSE}
+library(knitr)
+knit_print.data.frame <- function(x, ...) {
+  asis_output(
+    rmarkdown:::paged_table_html(x, options = attr(x, "options")),
+    meta = list(dependencies = rmarkdown:::html_dependency_pagedtable())
+  )
+}
+registerS3method("knit_print", "data.frame", knit_print.data.frame)
+```
+
+We first read in the data, cleaning up variable names as they were abbreviated once exported to shapefile format.
+
+```{r}
+# read in the data
+mn <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
+              geometry_column = "geometry",
+              fid_column_name = "geometry")
+# rename the census variables because their names were reformatted...
+names(mn)[1:28] <- 
+  c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
+    "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+    "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+    "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+    "internet_subscrip_in_house", "perc_male_5to9", "perc_male_10to14",
+    "perc_male_15to17", "perc_white_only", "perc_black_only", "perc_asian_only",
+    "perc_pacific_islander_only", "perc_at_least_two_races", "perc_SSI_pubassist_foodstamps",
+    "perc_house_units_w_mortgage", "perc_internet_subscription")
+names(mn)[93] <- c("TotalClasses")
+```
+
+## Data Exploration
+
+```{r}
+# look at the variables and their types
+str(mn)
+```
+
+Looking at the variables and their types, we were dealing with predominantly numerical variables. `GEOID`, `District`, `District.Nbr`, `CONUM`, `CSA`, and `CBSA` are ID variables so in the recipe we'll have to specify that so they wouldn't be included in the model.
+
+We decided to drop the geometry column and convert the data to a regular data frame format for this part because it was not necessary for the models and including it led to issues running some functions.
+
+```{r}
+mn <- mn %>%
+  st_drop_geometry()
+```
+
+We plotted the distributions of our variables to see what kind of data transformation we would need to perform.
+
+Below are sets of our predictors, first from the Annual Survey of School System Finances:
+
+```{r expl-cont-ss, fig.width=12, fig.height=8}
+mn %>%
+  select(-GEOID) %>%
+  # variables from the Annual Survey of School System Finances are in all caps
+  select(matches("^[A-Z]{4,}", ignore.case = FALSE)) %>%
+  select(where(is.numeric)) %>%
+  pivot_longer(cols = everything(),
+               names_to = "variable",
+               values_to = "values") %>%
+  ggplot(aes(x = values)) +
+  geom_histogram() +
+  facet_wrap(vars(variable),
+             scales = "free")
+```
+
+and now from the ACS and ACT data:
+
+```{r expl-cont-acs-act, fig.width=12, fig.height=8}
+mn %>%
+  # remove the ID variables
+  select(-c("GEOID", "District", "District.Nbr")) %>%
+  # these variables have at least one lower case character
+  select(matches("[a-z]", ignore.case = FALSE)) %>%
+  # filter for numerical variables
+  select(where(is.numeric)) %>%
+  pivot_longer(cols = everything(),
+               names_to = "variable",
+               values_to = "values") %>%
+  ggplot(aes(x = values)) +
+  geom_histogram() +
+  facet_wrap(vars(variable),
+             scales = "free")
+```
+
+A lot of the data are right-skewed, which makes sense as many variables are raw counts.
+
+We also checked for missing data:
+
+```{r missing-data}
+mn %>% 
+  add_n_miss() %>% 
+  count(n_miss_all)
+```
+
+We had one observation missing 65 variables, and this was the "Remainder of Minnesota" observation from the ACS. The NAs caused issues when we tried to fit a LASSO and random forest model so we removed them beforehand.
+
+```{r}
+mn <- mn %>%
+  drop_na()
+```
+
+## Model Recipe
+
+```{r include=FALSE}
+# set the seed
+set.seed(21)
+```
+
+From our data exploration, these were the things we had to do in the recipe:
+
+* Log-transform most of the variables (except for the ones that start with PCT from the School Survey as they're percentages and PP as they're spending per pupil and not right-skewed)
+* Use percentages for ACS variables
+* Normalize all numerical variables
+* Ignore `PCTTOTA` and `LOCRPAR` as all variables have the same value
+* Make the ID variables evaluative (i.e. not included in modeling)
+
+### Split data
+
+We split the data into a training and testing set and also created cross-validation folds for evaluation.
+
+```{r split}
+# split the data into a training and test set
+mn_split <- initial_split(mn, prop = .75)
+mn_training <- training(mn_split)
+mn_testing <- testing(mn_split)
+```
+
+```{r cv}
+# create cross-validation folds
+mn_cv <- vfold_cv(mn_training, v = 5)
+```
+
+### Preprocess data
+
+Here is the recipe for our models:
+
+```{r recipe}
+mn_recipe <- 
+  recipe(TotalClasses ~ ., data = mn_training) %>%
+  # ignore observations with missing data (necessary for LASSO mod)
+  step_naomit(everything(), skip = TRUE) %>%
+  # remove variables
+  step_rm(
+    # this one can be considered as response variable itself
+    NumCat, 
+    # all variables have the same value for these two
+    PCTTOTA, LOCRPAR, 
+    # raw counts from ACS
+    matches("[a-z]", ignore.case = FALSE),
+    -starts_with("perc"),
+    -total_pop,
+    -Avg_Cmp,
+    -TotalClasses
+    ) %>%
+  # log-transform 
+  step_log(
+    # total population
+    total_pop,
+    # spending / revenue variables from the school survey
+    ## ignore those that start with P since they're percentages / spending per student
+    matches("^[A-OQ-Z]{4,}", ignore.case = FALSE), 
+    ## ignore ID variables as well
+    -GEOID, -CONUM, -CBSA,
+    # some variables have 0s which will produce NaNs when log-transformed
+    offset = 1) %>% 
+  # make ID variables evaluative (not included in modeling)
+  update_role(
+    all_of(c("GEOID",
+             "District",
+             "District.Nbr",
+             "CONUM",
+             "CSA",
+             "CBSA")),
+    new_role = "evaluative") %>%
+  # make integers numeric
+  step_mutate_at(is.integer, fn = as.numeric) %>%
+  # normalize numerical variables
+  step_normalize(all_predictors())
+```
+
+And here is what the data looked like post-transformation:
+
+```{r}
+mn_recipe %>%
+  prep(mn_training) %>%
+  juice()
+```
+
+## Model Fitting
+
+### Regular linear regression
+
+We first tested a regular linear regression model and looked at the table of coefficients. Since we had an overwhelming number of predictors, we assumed beforehand that this model would not perform well due to overfitting.
+
+```{r lm}
+# define the model type
+mn_linear_mod <-
+  linear_reg() %>%
+  set_engine("lm") %>%
+  set_mode("regression")
+
+# set up the workflow
+mn_lm_wf <-
+  workflow() %>%
+  add_recipe(mn_recipe) %>%
+  add_model(mn_linear_mod)
+
+# fit the model
+mn_lm_fit <-
+  mn_lm_wf %>%
+  fit(mn_training)
+
+# display the results
+mn_lm_fit %>% 
+  pull_workflow_fit() %>% 
+  tidy() %>% 
+  mutate(across(where(is.numeric), ~round(.x,3))) 
+```
+
+### LASSO
+
+To deal with this, we switched to LASSO to shrink coefficients to zero and thereby eliminate insignificant variables from the model.
+
+```{r lasso}
+# define the model type
+mn_lasso_mod <-
+  linear_reg(mixture = 1) %>%
+  set_engine("glmnet") %>%
+  set_args(penalty = tune()) %>%
+  set_mode("regression")
+
+# set up the workflow
+mn_lasso_wf <-
+  workflow() %>%
+  add_recipe(mn_recipe) %>%
+  add_model(mn_lasso_mod)
+
+# set up penalty grid for tuning
+penalty_grid <- grid_regular(penalty(),
+                             levels = 20)
+
+# tune the parameter
+mn_lasso_tune <-
+  mn_lasso_wf %>%
+  tune_grid(
+    resamples = mn_cv,
+    grid = penalty_grid
+  )
+```
+
+We chose the best parameter based on RMSE and finalized the workflow / model. Then we looked at the variables that were retained by LASSO.
+
+```{r}
+# show the best penalty parameter
+mn_lasso_tune %>% 
+  show_best(metric = "rmse")
+
+# select best parameter by smallest rmse
+(best_param <- mn_lasso_tune %>% 
+    select_best(metric = "rmse"))
+```
+
+```{r}
+# finalize workflow
+mn_lasso_final_wf <- mn_lasso_wf %>% 
+  finalize_workflow(best_param)
+
+# fit final model
+mn_lasso_final_mod <-
+  mn_lasso_final_wf %>%
+  fit(data = mn_training)
+
+# look at the table of coefficients
+mn_lasso_final_mod %>% 
+  pull_workflow_fit() %>% 
+  tidy()  %>%
+  # filter for predictors with non-zero coefficients 
+  filter(estimate != 0)
+```
+
+### Random forest
+
+Our last candidate was a random forest model.
+
+```{r}
+# define the model type
+mn_rf_mod <- 
+  rand_forest(mtry = 23, # ~1/3 of predictors 
+              min_n = 5, 
+              trees = 200) %>% 
+  set_mode("regression") %>% 
+  set_engine("ranger")
+
+# set up the workflow
+mn_rf_wf <-
+  workflow() %>%
+  add_recipe(mn_recipe) %>%
+  add_model(mn_rf_mod)
+
+# fit the model
+mn_rf_fit <- 
+  mn_rf_wf %>% 
+  fit(mn_training)
+```
+
+
+## Model evaluation and comparison
+ 
+```{r}
+# fit model with best tuning parameter(s) to training data and apply to test data
+mn_lm_test <- 
+  mn_lm_wf %>% 
+  last_fit(mn_split)
+mn_lasso_test <- 
+  mn_lasso_final_wf %>% 
+  last_fit(mn_split)
+mn_rf_test <-
+  mn_rf_wf %>%
+  last_fit(mn_split)
+```
+
+Of our three models, the random forest performed best, followed by LASSO and then regular linear regression.
+
+```{r}
+# collect metrics for model applied to test data
+mn_lm_test %>%
+  collect_metrics
+mn_lasso_test %>% 
+  collect_metrics()
+mn_rf_test %>% 
+  collect_metrics()
+```
+
+### Residuals
+
+Since the RMSE from the regular lm model was rather high, we decided to only compare the LASSO and random forest moving forward. We computed their overall performance metrics and looked at the residuals.
+
+```{r}
+lasso_explain <- 
+  explain_tidymodels(
+    model = mn_lasso_final_mod,
+    data = mn_training %>% select(-TotalClasses), 
+    y = mn_training %>%  pull(TotalClasses),
+    label = "lasso"
+  )
+```
+
+```{r}
+rf_explain <- 
+  explain_tidymodels(
+    model = mn_rf_fit,
+    data = mn_training %>% select(-TotalClasses), 
+    y = mn_training %>%  pull(TotalClasses),
+    label = "rf"
+  )
+```
+
+```{r}
+# get overall performance metrics
+lasso_mod_perf <- model_performance(lasso_explain)
+rf_mod_perf <-  model_performance(rf_explain)
+```
+
+Here are tables of their performance metrics:
+
+```{r}
+# LASSO
+data.frame(lasso_mod_perf$measures)
+# random forest
+data.frame(rf_mod_perf$measures)
+```
+
+and the distribution of the residuals:
+
+```{r}
+plot(lasso_mod_perf,
+     rf_mod_perf, 
+     geom = "boxplot")
+```
+
+### Variable importance
+
+In the end the random forest showed to greatly outperform the LASSO. Our final step was to look at the variable importance plot from this final model.
+
+```{r}
+set.seed(1) 
+# create explainer
+rf_explain <- 
+  explain_tidymodels(
+    model = mn_rf_fit,
+    data = mn_training %>% select(-TotalClasses), 
+    y = mn_training %>%  pull(TotalClasses),
+    label = "rf"
+  )
+# compute variable importance
+rf_var_imp <- model_parts(rf_explain)
+# plot
+plot(rf_var_imp, show_boxplots = TRUE)
+```
+
 
 
 # Future Work

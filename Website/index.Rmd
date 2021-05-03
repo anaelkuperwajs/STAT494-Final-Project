@@ -5,6 +5,10 @@ date: "5/05/2021"
 output: html_document
 ---
 
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
 Welcome to our final project! We are Macalester College students (class of 2021/2022) from the department of Mathematics, Statistics, and Computer Science. We took the course, Advanced Data Science in R (STAT 494), during spring semester, 2021. Below is our final project for this course.
 
 
@@ -12,49 +16,493 @@ Welcome to our final project! We are Macalester College students (class of 2021/
 
 Computer Science is a field that is growing rapidly in the United States and around the world today. Advancements in computer science from industry are constantly being released and technology is becoming more ingrained into our daily lives. The increasing demand of computer scientists had caused the occupation to grow in popularity. To meet the demand, educational institutions and systems are increasing the amount of courses offered in order to train more future computer scientists. This development started at the college level, where majoring in computer science is becoming a widely available option. At Macalester College, it is one of the largest departments for both students and faculty. While the availability of courses at the college level is an amazing start, there is a big push to have computer sciences courses offered in K-12 education. Offering computer science courses in elementary and secondary schools provides an opportunity for kids to expose themselves to coding. This could lead younger students to discover new interests and get engaged with computer science earlier. Often, being exposed to computer science at a younger age can make students more comfortable with the material and the field later on. This can lead to a more empowered and diverse set of students entering the workforce or higher education. Given the importance of having computer science courses available in K-12 education, we decided to explore the availability of computer science courses in K-12 school districts in Minnesota. For our Advanced Data Science final project, we will explore the connection between a variety of datasets related to this topic, including K-12 computer science course availability in Minnesota, demographic information from the U.S. census, ACT scores, and funding.
 
+```{r}
+library(tidyverse)
+library(sf)
+library(plotly)
+library(gridExtra)
+library(tidymodels)
+library(naniar)
+library(DALEX)
+library(DALEXtra)
+library(vip)
+```
+
+```{r}
+##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
+mn_acs_ss_act_pred <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
+                geometry_column = "geometry",
+                fid_column_name = "geometry")
+# rename the census variables because their names were reformatted...
+names(mn_acs_ss_act_pred)[1:28] <- 
+  c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
+    "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+    "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+    "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+    "internet_subscrip_in_house", "perc_male_5to9", "perc_male_10to14",
+    "perc_male_15to17", "perc_white_only", "perc_black_only", "perc_asian_only",
+    "perc_pacific_islander_only", "perc_at_least_two_races", "perc_SSI_pubassist_foodstamps",
+    "perc_house_units_w_mortgage", "perc_internet_subscription")
+names(mn_acs_ss_act_pred)[93] <- c("TotalClasses")
+```
 
 # Computer Science K-12 Course Availability in Minnesota
 
 To begin with, let's explore what computer science course availability already exists in the state of Minnesota for K-12 education. The two plots below show the various public school districts in the state with the amount and variety of computer science courses offered in each district.
 
-- plotly visualization cs course variety
-- plotly visualization cs course amount
+```{r}
+mn_acs_ss_act_pred_viz <- 
+  mn_acs_ss_act_pred %>%  drop_na()
+
+ggplotly(
+  ggplot(mn_acs_ss_act_pred_viz) +
+  geom_sf(aes(fill = TotalClasses, text = paste(District)),  size = .1, color = "white") +
+  scale_fill_viridis_c(option = "B") +
+  labs(title = "Total CS Courses Offered", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5),
+        title =element_text(size=12, face='bold'))
+) 
+
+ggplotly(
+  ggplot(mn_acs_ss_act_pred_viz) +
+  geom_sf(aes(fill = NumCat, text = paste(District)),  size = .1, color = "white") +
+  scale_fill_viridis_c(option = "B") +
+  labs(title = "Number of CS Course Categories Offered", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5),
+        title =element_text(size=12, face='bold'))
+) 
+
+```
 
 
 # Demographics, ACT Scores, and Funding
 
 Due to the fact that public schools are funded by property taxes, course availability is usually an intersectional issue that is reliant on other factors. We hypothesized that there would be a correlation between course availability and overall wealth and access to resources of each district. In this section, we explore some of the variables we expected to be significant in relation to course availability.
 
-- ACT map
-- total revenue
-- White population map
-- internet subscription map
-- median household income map
+```{r}
+#population
+Population <-
+ggplot(mn_acs_ss_act_pred, aes(fill = total_pop)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::comma) +
+  labs(title = "Total Population", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
 
-TODO:
-- district population map
-- total spending (PPCSTOT, total spending per student)
-- perc_asian_only, FEDRNUT (funding from child nutrition act), LOCROTH, TEMPBEN (employee benefits), TCURSSC
+```{r}
+#use this
+Household_Income <-
+mn_acs_ss_act_pred %>%
+  ggplot(aes(fill = med_household_inc_12mo)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
+  labs(title = "Median Household Income", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+#percent race white only.... ok so MN is veryyyyyy white
+Percent_White <-
+ggplot(mn_acs_ss_act_pred, aes(fill = perc_white_only)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::percent) +
+  labs(title = "Percent of White People", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+
+```{r}
+#percent race Black only
+Percent_Black <-
+ggplot(mn_acs_ss_act_pred, aes(fill = perc_black_only)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::percent) +
+  labs(title = "Percent of Black People", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+#percent asian only
+Percent_Asian <-
+ggplot(mn_acs_ss_act_pred, aes(fill = perc_asian_only)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::percent_format(accuracy = 5L)) +
+  labs(title = "Percent of Asian People", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+#percent of ppl that have computer and internet subscription in household
+Percent_Internet_Sub <-
+ggplot(mn_acs_ss_act_pred, aes(fill = perc_internet_subscription)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::percent_format(accuracy = 5L)) +
+  labs(title = "Percent Internet Subscription", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+#median gross rent
+Gross_Rent <-
+ggplot(mn_acs_ss_act_pred, aes(fill = med_gross_rent)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
+  labs(title = "Median Gross Rent", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+``` 
+
+
+```{r}
+#percent of ppl that receive food stamps or SSI or public assistance
+Percent_Public_Assistance <-
+ggplot(mn_acs_ss_act_pred, aes(fill = perc_SSI_pubassist_foodstamps)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::percent) +
+  labs(title = "Percent Public Assistance", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+#total elementary/secondary revenue
+Revenue <-
+ggplot(mn_acs_ss_act_pred, aes(fill = TOTALRE)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
+  labs(title = "Total Revenue", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+#total expenditure
+Expenditure <-
+ggplot(mn_acs_ss_act_pred, aes(fill = TOTALEX)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
+  labs(title = "Total Expenditure", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+#other local revenues
+Local_Revenues <-
+ggplot(mn_acs_ss_act_pred, aes(fill = LOCROTH)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
+  labs(title = "Other Local Revenues", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+#average composite ACT score
+ACT <-
+ggplot(mn_acs_ss_act_pred, aes(fill = Avg_Cmp)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma") +
+  labs(title = "Average ACT Composite Score", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+Per_Pupil_Spending <-
+  ggplot(mn_acs_ss_act_pred, aes(fill = PPCSTOT)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "B", labels = scales::dollar) +
+  labs(title = "Per Pupil Total Spending", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+#total current spending for support services
+Support_Spending <-
+ggplot(mn_acs_ss_act_pred, aes(fill = TCURSSC)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma") +
+  labs(title = "Total Spending for Support Services", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+```{r, fig.width=14, fig.height=14}
+#Some of these maps look incredibly identical
+grid.arrange(Population, Percent_White, Percent_Black, Percent_Asian, 
+             Household_Income, Percent_Public_Assistance, Percent_Internet_Sub,
+             Per_Pupil_Spending, Revenue, 
+             ACT, nrow = 4)
+```
 
 
 # Connections
 
 Now that we have introduced you to our various datasets, we will show you how these connect and see if there is a correlation between course availability and demographic variables, ACT scores, and funding.
 
-TODO:
-- course amount vs any of section 2 variables
-- course variety vs any of section 2 variables
-- compare two districts: Red Lake and St. Paul
+```{r, echo = FALSE}
+#Should I add subtitles or change the titles?
+ggplotly(
+  ggplot(mn_acs_ss_act_pred_viz) +
+  geom_sf(aes(fill = TotalClasses, text = paste("Median Household Income: $", med_household_inc_12mo,
+                                                "<br>", "Percentage of White People: ",
+                                                paste(round(100*perc_white_only, 2), "%", sep=""),
+                                                "<br>", "Population: ", total_pop, 
+                                                "<br>", District)),  size = .1, color = "white") +
+  scale_fill_viridis_c(option = "B") +
+  labs(title = "District Profiles Colored by Total CS Courses Offered", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5),
+        title =element_text(size=12, face='bold'))
+)
 
+
+ggplotly(
+  ggplot(mn_acs_ss_act_pred_viz) +
+  geom_sf(aes(fill = NumCat, text = paste("Total Revenue: $", TOTALRE,
+                                                "<br>", "Total Per Pupil Spending: $", PPCSTOT,
+                                                "<br>", "Population: ", total_pop, 
+                                                "<br>", District)),  size = .1, color = "white") +
+  scale_fill_viridis_c(option = "B") +
+  labs(title = "District Profiles Colored by Number of CS Course Categories Offered", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+         plot.title = element_text(hjust = 0.5),
+         title =element_text(size=12, face='bold'))
+) 
+```
+
+
+```{r}
+st_paul_pub_school <- mn_acs_ss_act_pred %>%
+  filter(District == "St. Paul Public School District")
+
+red_lake_pub_school <- mn_acs_ss_act_pred %>%
+  filter(District == "Red Lake Public School District")
+```
+
+```{r}
+ggplot(red_lake_pub_school) + 
+  geom_sf(color = "magenta") +
+  ggtitle("Red Lake Public School District Profile") +
+  geom_sf_text(aes(label = "Population: 5,815"), nudge_y = 0.14) +
+  geom_sf_text(aes(label = "Perc. White People: 2.18%"), nudge_y = 0.09) +
+  geom_sf_text(aes(label = "Median Household Income: $39,676"), nudge_y = 0.04) +
+  geom_sf_text(aes(label = "Perc. w/ Internet Subscription: 59.9%"), nudge_y = -0.01) +
+  geom_sf_text(aes(label = "Perc. Receiving Govt. Assist.: 67.22%"), nudge_y = -0.06) +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5),
+        title = element_text(size=12, face='bold'))
+```
+
+```{r}
+ggplot(st_paul_pub_school) + 
+  geom_sf(color = "purple") +
+  ggtitle("St. Paul Public School District Profile") +
+  coord_sf(ylim = c(44.88,45.00)) +
+  geom_sf_text(aes(label = "Population: 304,547"), nudge_y = 0.043) +
+  geom_sf_text(aes(label = "Perc. White People: 56.96%"), nudge_y = 0.032) +
+  geom_sf_text(aes(label = "Median Household Income: $57,876"), nudge_y = 0.021) +
+  geom_sf_text(aes(label = "Perc. w/ Internet Subscription: 85.6%"), nudge_y = 0.01) +
+  geom_sf_text(aes(label = "Perc. Receiving Govt. Assist.: 37.87%"), nudge_y = 0) +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5),
+        title = element_text(size=12, face='bold'))
+```
+
+```{r}
+mn_acs_ss_act_pred %>%
+  mutate(highlighted_districts = ifelse(District == "Red Lake Public School District" | District == "St. Paul Public School District", "yes", "no")) %>%
+  ggplot(aes(fill = highlighted_districts)) +
+  geom_sf(color = "black", size = 0.2) +
+  scale_fill_manual(values = c("beige","maroon4")) +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        legend.position = "none",
+        panel.background = element_rect(fill = "white"),
+        title = element_text(size=12, face='bold')) +
+  ggtitle("Profile of Two Minnesota School Districts") #change title?
+```
 
 # Modeling Computer Science K-12 Course Availability in Minnesota
 
-To understand what factors have the largest influence on course availability, we created a model to predict the amount of computer science courses per district in the state of Minnesota.
+To understand what factors have the largest influence on course availability, we created two models to predict the amount of computer science courses per district in the state of Minnesota. The first model was LASSO, a linear regression method that shrinks coefficients even to zero to eliminate insignificant variables. With over 80 possible predictors, it would be difficult to quantitatively select variables for ordinary least squares and including everything would lead to overfitting. The second one we fitted was a random forest. A random forest consists of a large number of decision trees and averages the prediction over these trees. 
 
-- use variables to predict cs course amount per district
+Before fitting the models, the main transformation we had to perform was log-transformation for many of the variables from the Annual Survey of School System Finances. These were raw tallies of revenue or expenditure, so the data were right-skewed with a few districts having significantly higher values than the majority. Based on the RMSE, the random forest greatly outperformed the LASSO, with an RMSE of approximately 1.86 compared to the LASSO's 4.11. 
 
-TODO:
-- variable importance plot
+In a random forest model, some variables will have higher predictive power and contribute more to the outcome. Below is a plot ranking our predictors in terms of their importance:
+
+```{r data, include=FALSE}
+# read in the data
+mn <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
+              geometry_column = "geometry",
+              fid_column_name = "geometry")
+# rename the census variables because their names were reformatted...
+names(mn)[1:28] <- 
+  c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
+    "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+    "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+    "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+    "internet_subscrip_in_house", "perc_male_5to9", "perc_male_10to14",
+    "perc_male_15to17", "perc_white_only", "perc_black_only", "perc_asian_only",
+    "perc_pacific_islander_only", "perc_at_least_two_races", "perc_SSI_pubassist_foodstamps",
+    "perc_house_units_w_mortgage", "perc_internet_subscription")
+names(mn)[93] <- c("TotalClasses")
+# drop the geometry column and convert back to regular df so it's easier to work with
+mn <- mn %>%
+  st_drop_geometry()
+# remove NAs so we could fit rf without errors
+mn <- mn %>%
+  drop_na()
+```
+
+```{r split, include=FALSE}
+set.seed(21)
+# split the data into a training and test set
+mn_split <- initial_split(mn, prop = .75)
+mn_training <- training(mn_split)
+mn_testing <- testing(mn_split)
+# create cross-validation folds
+mn_cv <- vfold_cv(mn_training, v = 5)
+```
+
+```{r recipe, include=FALSE}
+mn_recipe <- 
+  recipe(TotalClasses ~ ., data = mn_training) %>%
+  # ignore observations with missing data (necessary for LASSO mod)
+  step_naomit(everything(), skip = TRUE) %>%
+  # remove variables
+  step_rm(
+    # this one can be considered as response variable itself
+    NumCat, 
+    # all variables have the same value for these two
+    PCTTOTA, LOCRPAR, 
+    # raw counts from ACS
+    matches("[a-z]", ignore.case = FALSE),
+    -starts_with("perc"),
+    -total_pop,
+    -Avg_Cmp,
+    -TotalClasses
+    ) %>%
+  # log-transform 
+  step_log(
+    # total population
+    total_pop,
+    # spending / revenue variables from the school survey
+    ## ignore those that start with P since they're percentages / spending per student
+    matches("^[A-OQ-Z]{4,}", ignore.case = FALSE), 
+    ## ignore ID variables as well
+    -GEOID, -CONUM, -CBSA,
+    # some variables have 0s which will produce NaNs when log-transformed
+    offset = 1) %>% 
+  # make ID variables evaluative (not included in modeling)
+  update_role(
+    all_of(c("GEOID",
+             "District",
+             "District.Nbr",
+             "CONUM",
+             "CSA",
+             "CBSA")),
+    new_role = "evaluative") %>%
+  # make integers numeric
+  step_mutate_at(is.integer, fn = as.numeric) %>%
+  # normalize numerical variables
+  step_normalize(all_predictors())
+```
+
+```{r model, include=FALSE}
+set.seed(21)
+# define the model type
+mn_rf_mod <- 
+  rand_forest(mtry = 23, # ~1/3 of predictors 
+              min_n = 5, 
+              trees = 200) %>% 
+  set_mode("regression") %>% 
+  set_engine("ranger")
+
+# set up the workflow
+mn_rf_wf <-
+  workflow() %>%
+  add_recipe(mn_recipe) %>%
+  add_model(mn_rf_mod)
+
+# fit the model
+mn_rf_fit <- 
+  mn_rf_wf %>% 
+  fit(mn_training)
+```
+
+```{r var-imp, include=FALSE}
+set.seed(1) 
+# create explainer
+rf_explain <- 
+  explain_tidymodels(
+    model = mn_rf_fit,
+    data = mn_training %>% select(-TotalClasses), 
+    y = mn_training %>%  pull(TotalClasses),
+    label = "rf"
+  )
+# compute variable importance
+rf_var_imp <- model_parts(rf_explain)
+```
+
+```{r plot, echo=FALSE, fig.align="center", fig.width=10, fig.height=9}
+# plot
+plot(rf_var_imp, show_boxplots = TRUE)
+```
+
+Each bar shows how much the RMSE would change if the corresponding variable was permuted. If permuting a certain variable significantly increases the RMSE relative to permuting other variables then it would be important. Here, the RMSE increases the most when revenue from the Child Nutrition Act, spending on instructional staff, and total expenditure are permuted. The highest-ranking variables all came from the School Survey, and the top 3 most important demographic variables from the ACS are percent of the total population who are black alone, percent of households with Internet subscription, and percent of households receiving SSI, public assistance, or foodstamps (in each district). The variables at the bottom showing no change in RMSE if permuted were excluded from the modeling right from the beginning as they are ID or raw demographic variables (for these we used their percentage version).
 
 
 # Implications
