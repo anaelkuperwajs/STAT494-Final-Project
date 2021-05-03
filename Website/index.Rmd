@@ -32,7 +32,8 @@ library(vip)
 ##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
 mn_acs_ss_act_pred <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
                 geometry_column = "geometry",
-                fid_column_name = "geometry")
+                fid_column_name = "geometry",
+                quiet = TRUE)
 # rename the census variables because their names were reformatted...
 names(mn_acs_ss_act_pred)[1:28] <- 
   c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
@@ -49,6 +50,8 @@ names(mn_acs_ss_act_pred)[93] <- c("TotalClasses")
 # Computer Science K-12 Course Availability in Minnesota
 
 To begin with, let's explore what computer science course availability already exists in the state of Minnesota for K-12 education. The two plots below show the various public school districts in the state with the amount and variety of computer science courses offered in each district.
+
+These plotly maps are an interactive tool that both visually and textually shows important information. You can hover over a district and a text box will appear with relevant information, making for an easy comparison between districts.
 
 ```{r}
 mn_acs_ss_act_pred_viz <- 
@@ -81,9 +84,11 @@ ggplotly(
 ```
 
 
-# Demographics, ACT Scores, and Funding
+# Demographics, ACT Scores, and Finances
 
 Due to the fact that public schools are funded by property taxes, course availability is usually an intersectional issue that is reliant on other factors. We hypothesized that there would be a correlation between course availability and overall wealth and access to resources of each district. In this section, we explore some of the variables we expected to be significant in relation to course availability.
+
+ADD WRITING HERE
 
 ```{r}
 #population
@@ -282,6 +287,8 @@ grid.arrange(Population, Percent_White, Percent_Black, Percent_Asian,
 
 Now that we have introduced you to our various datasets, we will show you how these connect and see if there is a correlation between course availability and demographic variables, ACT scores, and funding.
 
+Both maps include the district population and name, and either the number of total computer science courses offered or the number of computer science course categories offered. The first map in addition includes the median household income, percentage of white people, and average ACT score whereas the second map includes the total revenue and total spending per pupil. These maps also use plotly, so you can use the hover feature to view the variable information.
+
 ```{r, echo = FALSE}
 #Should I add subtitles or change the titles?
 ggplotly(
@@ -289,6 +296,7 @@ ggplotly(
   geom_sf(aes(fill = TotalClasses, text = paste("Median Household Income: $", med_household_inc_12mo,
                                                 "<br>", "Percentage of White People: ",
                                                 paste(round(100*perc_white_only, 2), "%", sep=""),
+                                                "<br>", "Average ACT Score: ", Avg_Cmp,
                                                 "<br>", "Population: ", total_pop, 
                                                 "<br>", District)),  size = .1, color = "white") +
   scale_fill_viridis_c(option = "B") +
@@ -308,7 +316,7 @@ ggplotly(
                                                 "<br>", "Population: ", total_pop, 
                                                 "<br>", District)),  size = .1, color = "white") +
   scale_fill_viridis_c(option = "B") +
-  labs(title = "District Profiles Colored by Number of CS Course Categories Offered", fill = "") +
+  labs(title = "District Profiles Colored by Variety of CS Courses Offered", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -317,6 +325,7 @@ ggplotly(
 ) 
 ```
 
+ADD WRITING HERE
 
 ```{r}
 st_paul_pub_school <- mn_acs_ss_act_pred %>%
@@ -325,6 +334,22 @@ st_paul_pub_school <- mn_acs_ss_act_pred %>%
 red_lake_pub_school <- mn_acs_ss_act_pred %>%
   filter(District == "Red Lake Public School District")
 ```
+
+```{r}
+mn_acs_ss_act_pred %>%
+  mutate(highlighted_districts = ifelse(District == "Red Lake Public School District" | District == "St. Paul Public School District", "yes", "no")) %>%
+  ggplot(aes(fill = highlighted_districts)) +
+  geom_sf(color = "black", size = 0.2) +
+  scale_fill_manual(values = c("beige","maroon4")) +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        legend.position = "none",
+        panel.background = element_rect(fill = "white"),
+        title = element_text(size=12, face='bold')) +
+  ggtitle("Profile of Two Minnesota School Districts") #change title?
+```
+
+ADD WRITING HERE
 
 ```{r}
 ggplot(red_lake_pub_school) + 
@@ -361,19 +386,6 @@ ggplot(st_paul_pub_school) +
         title = element_text(size=12, face='bold'))
 ```
 
-```{r}
-mn_acs_ss_act_pred %>%
-  mutate(highlighted_districts = ifelse(District == "Red Lake Public School District" | District == "St. Paul Public School District", "yes", "no")) %>%
-  ggplot(aes(fill = highlighted_districts)) +
-  geom_sf(color = "black", size = 0.2) +
-  scale_fill_manual(values = c("beige","maroon4")) +
-  theme(axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        legend.position = "none",
-        panel.background = element_rect(fill = "white"),
-        title = element_text(size=12, face='bold')) +
-  ggtitle("Profile of Two Minnesota School Districts") #change title?
-```
 
 # Modeling Computer Science K-12 Course Availability in Minnesota
 
@@ -497,7 +509,7 @@ rf_explain <-
 rf_var_imp <- model_parts(rf_explain)
 ```
 
-```{r plot, echo=FALSE, fig.align="center", fig.width=10, fig.height=9}
+```{r plot, echo=FALSE, fig.align="center", fig.width=10, fig.height=12}
 # plot
 plot(rf_var_imp, show_boxplots = TRUE)
 ```

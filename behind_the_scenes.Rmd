@@ -2,7 +2,12 @@
 title: "Final Project - Behind The Scenes"
 author: "Anael Kuperwajs Cohen, Colleen Minnihan, Hayley Hadges, Thy Nguyen"
 date: "5/05/2021"
-output: html_document
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+    code_download: true
 ---
 
 # Introduction
@@ -62,6 +67,8 @@ library(naniar)
 library(DALEX)
 library(DALEXtra)
 library(vip)
+library(gridExtra)
+library(plotly)
 ```
 
 ## Load Datasets
@@ -73,7 +80,6 @@ course_catalog <- read_csv("course_catalog.csv") # MCCC
 ss <- readxl::read_excel("elsec18t.xls") # ASSSF
 ```
 
-
 # Data Cleaning
 
 **MCCC Data**
@@ -81,12 +87,12 @@ ss <- readxl::read_excel("elsec18t.xls") # ASSSF
 The data from the Department of Education was neatly split into spreadsheets based on course classifications. In order to use this data more easily, we manually combined all the spreadsheets to have one, connected dataset with all the courses offered. We had to manually add in the categories of course classification and category in order to create one dataset. Furthermore, in order to be able to connect to the other datasets, we needed to have the district number as its own variable. In this dataset, the district name and number were combined as one variable, so we used regular expressions to split the name and number. This was fairly simple, due to the consistency in the district variable having the number as the last 7 digits.
 
 ```{r}
-# course_catalog_predictors <-
-# course_catalog %>% 
-#   mutate(DistNum = as.integer(str_sub(`District`, -7,-4))) %>% 
-#   group_by(DistNum) %>% 
-#   summarise(TotalClasses = sum(n()),
-#             NumCat = length(unique(Category)))
+course_catalog_predictors <-
+course_catalog %>%
+  mutate(DistNum = as.integer(str_sub(`District`, -7,-4))) %>%
+  group_by(DistNum) %>%
+  summarise(TotalClasses = sum(n()),
+            NumCat = length(unique(Category)))
 ```
 
 
@@ -96,54 +102,65 @@ The data from the Department of Education was neatly split into spreadsheets bas
 The ACS data was already in tidy format, which was convenient for our purposes. We focused on narrowing down variables to the ones that were important to our project and renaming them so that we could easily understand the meaning of the variable. Many of the districts had the word 'Minnesota' in it, so we removed that because all of our data is about Minnesota. Lastly, we altered the dataset to remove any NA values.
 
 ```{r}
-# mn_2019_census <- get_acs(state = "MN", 
-#                          geography = "school district (unified)",
-#                          variables = c("B01003_001",
-#                                        "B01001_004",
-#                                        "B01001_005",
-#                                        "B01001_006",
-#                                        "B02001_002",
-#                                        "B02001_003",
-#                                        "B02001_005",
-#                                        "B02001_006",
-#                                        "B02001_008",
-#                                        "B19013_001",
-#                                        "B09010_001", 
-#                                        "B25031_001",
-#                                        "B25027_001",
-#                                        "B28003_001"),
-#                          geometry = TRUE,
-#                          year = 2019)
-# 
-# mn_2019_census_nogeom <- mn_2019_census %>%
-#   st_drop_geometry() %>% #get rid of the geometry so we can spread()
-#   select(-`moe`) %>% #get rid of moe variable(not sure what it is)
-#   spread(variable, estimate) %>% #give each variable a column
-#   rename(total_pop = B01003_001,
-#          male_5to9 = B01001_004,
-#          male_10to14 = B01001_005,
-#          male_15to17 = B01001_006,
-#          race_white_only = B02001_002,
-#          race_Black_only = B02001_003,
-#          race_Asian_only = B02001_005,
-#          race_pacific_islander_only = B02001_006,
-#          at_least_two_races = B02001_008,
-#          med_household_inc_12mo = B19013_001,
-#          SSI_pubassist_foodstamps = B09010_001,
-#          med_gross_rent = B25031_001,
-#          house_units_w_mortgage = B25027_001,
-#          comp_internet_subscrip_in_house = B28003_001
-#          ) %>% #rename variables
-#   mutate(District = str_extract(`NAME`, "[^,]+")) %>% #delete ", Minnesota" after district name
-#   select(-NAME)#remove `NAME` column
-# 
-# #adding a column with district numbers
-# districts <- districts %>%
-#   mutate(District = `District Name`) %>%
-#   select(-`X3`, - `District Name`)
-# 
-# mn_2019_census_nogeom <- mn_2019_census_nogeom %>%
-#   left_join(districts)
+#census_api_key("key")
+
+mn_2019_census <- get_acs(state = "MN", 
+                         geography = "school district (unified)",
+                         variables = c("B01003_001",
+                                       "B01001_001",
+                                       "B01001_004",
+                                       "B01001_005",
+                                       "B01001_006",
+                                       "B02001_001",
+                                       "B02001_002",
+                                       "B02001_003",
+                                       "B02001_005",
+                                       "B02001_006",
+                                       "B02001_008",
+                                       "B19013_001",
+                                       "B09010_001",
+                                       "B09010_002", 
+                                       "B25031_001",
+                                       "B25027_001",
+                                       "B25027_002",
+                                       "B28002_001",
+                                       "B28002_002"),
+                         geometry = TRUE,
+                         year = 2019)
+
+mn_2019_census_nogeom <- mn_2019_census %>%
+  select(-`moe`) %>% #get rid of moe variable(not sure what it is)
+  spread(variable, estimate) %>% #give each variable a column
+  rename(total_pop = B01003_001,
+         male_5to9 = B01001_004,
+         male_10to14 = B01001_005,
+         male_15to17 = B01001_006,
+         race_white_only = B02001_002,
+         race_Black_only = B02001_003,
+         race_Asian_only = B02001_005,
+         race_pacific_islander_only = B02001_006,
+         at_least_two_races = B02001_008,
+         med_household_inc_12mo = B19013_001,
+         SSI_pubassist_foodstamps = B09010_002,
+         med_gross_rent = B25031_001,
+         house_units_w_mortgage = B25027_002,
+         internet_subscrip_in_house = B28002_002
+         ) %>% #rename variables
+  mutate(District = str_extract(`NAME`, "[^,]+")) %>% #delete ", Minnesota" after district name
+  select(-NAME) %>% #remove `NAME` column
+  mutate(perc_male_5to9 = male_5to9/B01001_001,
+         perc_male_10to14 = male_10to14/B01001_001,
+         perc_male_15to17 = male_15to17/B01001_001,
+         perc_white_only = race_white_only/B02001_001,
+         perc_black_only = race_Black_only/B02001_001,
+         perc_asian_only = race_Asian_only/B02001_001,
+         perc_pacific_islander_only = race_pacific_islander_only/B02001_001,
+         perc_at_least_two_races = at_least_two_races/B02001_001,
+         perc_SSI_pubassist_foodstamps = SSI_pubassist_foodstamps/B09010_001,
+         perc_house_units_w_mortgage = house_units_w_mortgage/B25027_001,
+         perc_internet_subscription = internet_subscrip_in_house/B28002_001
+         ) %>% #create percentage variables
+  select(-B01001_001,-B02001_001, -B09010_001, -B25027_001, -B28002_001 ) #deselect variables used to calculate % but aren't important for our visualizations
 ```
 
 
@@ -152,29 +169,29 @@ The ACS data was already in tidy format, which was convenient for our purposes. 
 To begin with, this dataset included a range of years, so we filtered the graduation year to our year of interest, which was 2018. This dataset also originally had extra variables that were irrelevant to our interests, so our cleaning process involved removing predictors so that we were only left with district name and average composite ACT score. The district name included the district number, so to create two separate values we used regular expressions. The district number was consistently located at the same spot in the name.
 
 ```{r}
-# act_clean <-
-# act %>%
-#   filter(`Grad Year` == 2018,
-#          `Analysis Level` == "District",
-#          `District Name` != "MINNESOTA DEPT OF EDUCATION",
-#          `Avg Comp` != ".") %>%
-#   select(`District Name`, `Avg Comp`) %>%
-#   mutate(`Dist Num` = as.integer(str_extract_all(`District Name`, "[:digit:]+"))) %>%
-#   mutate(`Dist Num`= replace(`Dist Num`, `District Name`=="GRANADA-HUNTLEY-EAST CHAIN SD", 2536),
-#          `Dist Num`= replace(`Dist Num`, `District Name`=="ALBERT LEA AREA SCHOOLS", 241),
-#          `Dist Num`= replace(`Dist Num`, `District Name`=="ATWATER-COSMOS-GROVE CITY SD", 2396),
-#          `Dist Num`= replace(`Dist Num`, `District Name`=="BOLD SCHOOL DISTRICT", 2534),
-#          `Dist Num`= replace(`Dist Num`, `District Name`=="BUFFALO HANOVER MONTROSE SD", 0877),
-#          `Dist Num`= replace(`Dist Num`, `District Name`=="BUFFALO LAKE-HECTOR-STEWART SD", 2159),
-#          `Dist Num`= replace(`Dist Num`, `District Name`=="EASTERN CARVER CO SCHOOLS", 112),
-#          `Dist Num`= replace(`Dist Num`, `District Name`=="MANKATO AREA PUBLIC SCHS", 77),
-#          `Dist Num`= replace(`Dist Num`, `District Name`=="MINNEAPOLIS PUBLIC SCH DIST", 9991),
-#          `Dist Num`= replace(`Dist Num`, `District Name`=="MINNEOTA PUBLIC SCHOOLS", 414),
-#          `Dist Num`= replace(`Dist Num`, `District Name`=="PLAINVIEW ELGIN MILLVILLE SD", 2899),
-#          `Dist Num`= replace(`Dist Num`, `District Name`=="ROYALTON PUBLIC SCHOOLS", 485),
-#          `Dist Num`= replace(`Dist Num`, `District Name`=="WASECA PUBLIC SCHOOL DIST", 829),
-#          `Dist Num`= replace(`Dist Num`, `District Name`=="WAUBUN-OGEMA-WHITE EARTH PSD", 435),
-#          `Dist Num`= replace(`Dist Num`, `District Name`=="WINONA AREA PUBLIC SCHOOL DIST", 861))
+act_clean <-
+act %>%
+  filter(`Grad Year` == 2018,
+         `Analysis Level` == "District",
+         `District Name` != "MINNESOTA DEPT OF EDUCATION",
+         `Avg Comp` != ".") %>%
+  select(`District Name`, `Avg Comp`) %>%
+  mutate(`Dist Num` = as.integer(str_extract_all(`District Name`, "[:digit:]+"))) %>%
+  mutate(`Dist Num`= replace(`Dist Num`, `District Name`=="GRANADA-HUNTLEY-EAST CHAIN SD", 2536),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="ALBERT LEA AREA SCHOOLS", 241),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="ATWATER-COSMOS-GROVE CITY SD", 2396),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="BOLD SCHOOL DISTRICT", 2534),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="BUFFALO HANOVER MONTROSE SD", 0877),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="BUFFALO LAKE-HECTOR-STEWART SD", 2159),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="EASTERN CARVER CO SCHOOLS", 112),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="MANKATO AREA PUBLIC SCHS", 77),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="MINNEAPOLIS PUBLIC SCH DIST", 9991),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="MINNEOTA PUBLIC SCHOOLS", 414),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="PLAINVIEW ELGIN MILLVILLE SD", 2899),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="ROYALTON PUBLIC SCHOOLS", 485),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="WASECA PUBLIC SCHOOL DIST", 829),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="WAUBUN-OGEMA-WHITE EARTH PSD", 435),
+         `Dist Num`= replace(`Dist Num`, `District Name`=="WINONA AREA PUBLIC SCHOOL DIST", 861))
 ```
 
 
@@ -182,13 +199,15 @@ To begin with, this dataset included a range of years, so we filtered the gradua
 
 Originally, this dataset includes information about all the states. Part of cleaning was filtering for just the state of Minnesota, since that is our target region.
 
+CHECK WITH THY
+
 ```{r}
-# ss %>%
-#   # filter for MN 
-#   filter(str_detect(NCESID, "^27")) %>%
-#   arrange(NCESID) %>%
-#   head(10) %>%
-#   select(NCESID)
+ss %>%
+  # filter for MN
+  filter(str_detect(NCESID, "^27")) %>%
+  arrange(NCESID) %>%
+  head(10) %>%
+  select(NCESID)
 ```
 
 
@@ -202,9 +221,128 @@ This dataset originally had four categories, district name, district number, sta
 Part of the work we did after finding, importing, and cleaning our various datasets was joining them together. An important piece for this was ensuring the district names and numbers aligned, and most of that was completed in the previous step. Here is our code for joining the datasets:
 
 ```{r}
+# read in datasets
+## annual survey of school system finances (2018, national)
+ss <- readxl::read_excel("elsec18t.xls")
 
+## selected variables from the ACS (2019, MN)
+mn_acs <- st_read("mn_2019_census/mn_2019_census.shp", 
+                  geometry_column = "geometry", 
+                  fid_column_name = "geometry")
+mn_acs <- as.data.frame(mn_acs)
+# rename the columns
+names(mn_acs) <- c("GEOID", "male_5to9", "male_10to14", "male_15to17",
+                   "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+                   "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+                   "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+                   "internet_subscrip_in_house", "District", "perc_male_5to9", "perc_male_10to14",
+                   "perc_male_15to17", "perc_white_only", "perc_black_only", "perc_asian_only",
+                   "perc_pacific_islander_only", "perc_at_least_two_races", "perc_SSI_pubassist_foodstamps",
+                   "perc_house_units_w_mortgage", "perc_internet_subscription",
+                   "District.Nbr", "geometry")
+# move the district name and number cols to the front
+mn_acs <- mn_acs %>%
+  relocate(District, District.Nbr, .after = GEOID)
+
+## ACT scores (MN)
+mn_act <- read.csv("act_clean.csv")[-1] # remove the redundant index column created when reading by csv
 ```
 
+Join by NCES ID for school districts
+
+```{r}
+# look at this column from the school survey
+ss %>%
+  # filter for MN 
+  filter(str_detect(NCESID, "^27")) %>%
+  arrange(NCESID) %>%
+  head(10) %>%
+  select(NCESID)
+
+# and from the ACS
+mn_acs %>%
+  arrange(GEOID) %>%
+  head(10) %>%
+  select(GEOID)
+```
+
+```{r}
+# left join on ACS data
+mn_acs_ss <- mn_acs %>%
+  left_join(ss, by = c("GEOID" = "NCESID"))
+```
+
+Let's look at the name columns from the two datasets to verify that they point to the same district
+
+```{r}
+mn_acs_ss %>%
+  select(District, NAME)
+```
+
+Now let's see which rows from the ACS and school survey didn't get a match
+
+```{r}
+# ACS
+mn_acs_ss %>%
+  filter(is.na(NAME))
+
+# school survey
+ss %>%
+  filter(str_detect(NCESID, "^27")) %>% # filter for MN
+  anti_join(mn_acs, by = c("NCESID" = "GEOID"))
+```
+
+So only the row "Remainder of Minnesota" from the ACS didn't have a match, which makes perfect sense. There are 67 school districts from the school survey that did not join to the ACS, but perhaps they fall into the "Remainder of Minnesota" category. A lot of these districts also had 0 for enrollment.
+
+To join this dataset with the ACT data, we'll have to use the school district numbers as the ACT data does not contain the NCES ID.
+
+```{r}
+# look at this variable from each dataset to see their format
+mn_acs_ss %>%
+  arrange(District.Nbr) %>%
+  select(District.Nbr)
+
+mn_act %>%
+  arrange(Dist.Num) %>%
+  select(Dist.Num)
+```
+
+Seems like we're missing ACT scores for 11 school districts. Nevertheless the formats do match so let's join the datasets
+
+```{r}
+mn_acs_ss_act <- mn_acs_ss %>%
+  mutate(District.Nbr = as.integer(District.Nbr)) %>%
+  left_join(mn_act, by = c("District.Nbr" = "Dist.Num"))
+```
+
+Finally before we export the data, we can remove the redundant names and ID columns from the school survey and ACT datasets as we'll stick to their format from the ACS
+
+```{r}
+mn_acs_ss_act <- mn_acs_ss_act %>%
+  select(-c("IDCENSUS", "NAME", "District.Name"))
+```
+
+Export the data:
+
+```{r}
+#write.csv(mn_acs_ss_act, "mn_acs_ss_act.csv")
+```
+
+```{r}
+st_write(mn_acs_ss_act, "mn_acs_ss_act/mn_acs_ss_act.shp", 
+         append=FALSE, 
+         fid_column_name = "geometry")
+```
+
+Join with predictor data, replace all missing data from the course catalog with 0, and remove the redundant variable. This is the final step!
+```{r}
+mn_acs_ss_act_pred <- mn_acs_ss_act %>%
+  # mutate(District.Nbr = as.integer(District.Nbr)) %>% ## no longer necessary since they're already ints
+  ## changed to left join to ignore rows without matches from the course catalog
+  left_join(course_catalog_predictors, by = c("District.Nbr" = "DistNum")) %>% 
+  mutate(TotalClasses = ifelse(is.na(TotalClasses), 0, TotalClasses),
+         NumCat = ifelse(is.na(NumCat), 0, NumCat)) 
+```
 
 # Mapping and Shape Files
 
@@ -212,9 +350,60 @@ While we had all the data necessary to create useful graphs and tables, one of o
 
 - why a challenge?
 
+```{r}
+##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
+mn_acs_ss_act_pred <- st_read("mn_acs_ss_act_pred/mn_acs_ss_act_pred.shp",
+                geometry_column = "geometry",
+                fid_column_name = "geometry",
+                quiet = TRUE)
+# rename the census variables because their names were reformatted...
+names(mn_acs_ss_act_pred)[1:28] <- 
+  c("GEOID", "District", "District.Nbr", "male_5to9", "male_10to14", "male_15to17",
+    "total_pop", "race_white_only", "race_Black_only", "race_Asian_only",
+    "race_pacific_islander_only", "at_least_two_races", "SSI_pubassist_foodstamps",
+    "med_household_inc_12mo", "house_units_w_mortgage", "med_gross_rent",
+    "internet_subscrip_in_house", "perc_male_5to9", "perc_male_10to14",
+    "perc_male_15to17", "perc_white_only", "perc_black_only", "perc_asian_only",
+    "perc_pacific_islander_only", "perc_at_least_two_races", "perc_SSI_pubassist_foodstamps",
+    "perc_house_units_w_mortgage", "perc_internet_subscription")
+names(mn_acs_ss_act_pred)[93] <- c("TotalClasses")
+```
+
+
 # Visualizations and Plotly
 
-Although we knew our maps were sufficient, we wanted to add another element to our project. We decided to make the maps interactive and chose to use plotly to achieve this.
+Although we knew our maps were sufficient, we wanted to add another element to our project. We decided to make the maps interactive and chose to use plotly to achieve this. The plotly functions had an issue with our final dataset and would not map unless we removed all rows with NA; converting the NA values to 0 did not fix the issue, and neither did converting the ‘N’ values we found in two variable columns to 0. In total, dropping the NA rows removed 11 districts. With more time this issue should be explored further. One thing that is important to note is that the districts that were not mapped still show interactivity based on whichever district is closest to the pointer.
+
+Static Graph
+```{r}
+#population
+ggplot(mn_acs_ss_act_pred, aes(fill = total_pop)) + 
+  geom_sf(color = NA) + 
+  scale_fill_viridis_c(option = "magma", labels = scales::comma) +
+  labs(title = "Total Population", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5))
+```
+
+Plotly
+```{r}
+mn_acs_ss_act_pred_viz <- 
+  mn_acs_ss_act_pred %>%  drop_na()
+
+ggplotly(
+  ggplot(mn_acs_ss_act_pred_viz) +
+  geom_sf(aes(fill = TotalClasses, text = paste(District)),  size = .1, color = "white") +
+  scale_fill_viridis_c(option = "B") +
+  labs(title = "Total CS Courses Offered", fill = "") +
+  theme(axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        panel.background = element_rect(fill = "white"),
+        plot.title = element_text(hjust = 0.5),
+        title =element_text(size=12, face='bold'))
+) 
+```
 
 
 # Modeling
@@ -621,7 +810,6 @@ rf_var_imp <- model_parts(rf_explain)
 # plot
 plot(rf_var_imp, show_boxplots = TRUE)
 ```
-
 
 
 # Future Work
