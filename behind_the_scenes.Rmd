@@ -14,6 +14,7 @@ output:
 
 Computer Science is a field that is growing rapidly in the United States and around the world today. Advancements in computer science from industry are constantly being released and technology is becoming more ingrained into our daily lives. The increasing demand of computer scientists had caused the occupation to grow in popularity. To meet the demand, educational institutions and systems are increasing the amount of courses offered in order to train more future computer scientists. This development started at the college level, where majoring in computer science is becoming a widely available option. At Macalester College, it is one of the largest departments for both students and faculty. While the availability of courses at the college level is an amazing start, there is a big push to have computer sciences courses offered in K-12 education. Offering computer science courses in elementary and secondary schools provides an opportunity for kids to expose themselves to coding. This could lead younger students to discover new interests and get engaged with computer science earlier. Often, being exposed to computer science at a younger age can make students more comfortable with the material and the field later on. This can lead to a more empowered and diverse set of students entering the workforce or higher education. Given the importance of having computer science courses available in K-12 education, we decided to explore the availability of computer science courses in K-12 school districts in Minnesota. For our Advanced Data Science final project, we will explore the connection between a variety of datasets related to this topic, including K-12 computer science course availability in Minnesota, demographic information from the U.S. census, ACT scores, and funding.
 
+To see our final product, visit: https://advanced-data-science-final-project.netlify.app
 
 # About the Datasets
 
@@ -49,14 +50,14 @@ This data set includes the name of all school districts in Minnesota as well as 
 Link: https://www.dhs.state.mn.us/main/groups/county_access/documents/pub/dhs16_193591.pdf
 
 
-#Important Packages and Datasets
+# Important Packages and Datasets
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 options(scipen = 999)
 ```
 
-## Load Packages
+**Load Packages**
 
 ```{r}
 library(tidycensus) # for getting the census data
@@ -71,7 +72,7 @@ library(gridExtra)
 library(plotly)
 ```
 
-## Load Datasets
+**Load Datasets**
 
 ```{r}
 act <- read_csv("act_data.csv") # ACT
@@ -441,7 +442,7 @@ names(mn)[1:28] <-
 names(mn)[93] <- c("TotalClasses")
 ```
 
-## Data Exploration
+### Data Exploration
 
 ```{r}
 # look at the variables and their types
@@ -512,7 +513,7 @@ mn <- mn %>%
   drop_na()
 ```
 
-## Model Recipe
+### Model Recipe
 
 ```{r include=FALSE}
 # set the seed
@@ -527,7 +528,7 @@ From our data exploration, these were the things we had to do in the recipe:
 * Ignore `PCTTOTA` and `LOCRPAR` as all variables have the same value
 * Make the ID variables evaluative (i.e. not included in modeling)
 
-### Split data
+**Split data**
 
 We split the data into a training and testing set and also created cross-validation folds for evaluation.
 
@@ -543,7 +544,7 @@ mn_testing <- testing(mn_split)
 mn_cv <- vfold_cv(mn_training, v = 5)
 ```
 
-### Preprocess data
+**Preprocess data**
 
 Here is the recipe for our models:
 
@@ -599,9 +600,9 @@ mn_recipe %>%
   juice()
 ```
 
-## Model Fitting
+### Model Fitting
 
-### Regular linear regression
+**Regular linear regression**
 
 We first tested a regular linear regression model and looked at the table of coefficients. Since we had an overwhelming number of predictors, we assumed beforehand that this model would not perform well due to overfitting.
 
@@ -630,7 +631,7 @@ mn_lm_fit %>%
   mutate(across(where(is.numeric), ~round(.x,3))) 
 ```
 
-### LASSO
+**LASSO**
 
 To deal with this, we switched to LASSO to shrink coefficients to zero and thereby eliminate insignificant variables from the model.
 
@@ -691,7 +692,7 @@ mn_lasso_final_mod %>%
   filter(estimate != 0)
 ```
 
-### Random forest
+**Random forest**
 
 Our last candidate was a random forest model.
 
@@ -717,7 +718,7 @@ mn_rf_fit <-
 ```
 
 
-## Model evaluation and comparison
+### Model evaluation and comparison
  
 ```{r}
 # fit model with best tuning parameter(s) to training data and apply to test data
@@ -744,7 +745,7 @@ mn_rf_test %>%
   collect_metrics()
 ```
 
-### Residuals
+**Residuals**
 
 Since the RMSE from the regular lm model was rather high, we decided to only compare the LASSO and random forest moving forward. We computed their overall performance metrics and looked at the residuals.
 
@@ -791,7 +792,7 @@ plot(lasso_mod_perf,
      geom = "boxplot")
 ```
 
-### Variable importance
+**Variable importance**
 
 In the end the random forest showed to greatly outperform the LASSO. Our final step was to look at the variable importance plot from this final model.
 
@@ -812,4 +813,12 @@ plot(rf_var_imp, show_boxplots = TRUE)
 ```
 
 
-# Future Work
+# Implications
+
+The first thing that is critical to highlight is that correlation does not imply causation. Although this project looks at connections between various datasets and different variables, we are not suggesting that any of our predictors directly alter computer science course availability. It is possible, given the work that we have done, but without an experiment we cannot be certain about causation.
+
+Previous work does exist about how disparities in education are related to many of the variables we displayed in our project, such as household income and race. It is an intersectional issue that combines many layers of societal disparities. For instance, it has been proven that ACT and standardized test scores show more about family wealth and privilege than actual intelligence or likelihood for success. Therefore, it is logical that the same districts that have high average ACT scores will have high median household incomes.
+
+That being said, there are many nuances to this issue that we could not address within the scope of our project. One variable we looked at was race, and while the connection between race and educational disparities has been studied, that can be difficult to see in some of our work. We hypothesize that there are a few reasons for this. First, Minnesota in general is largely populated by White people. Furthermore, the place where there is the most diversity, near the Twin Cities, is also a place with considerable inequality. Without this information, it may seem as though there is correlation between greater diversity, higher median household income, and computer science course availability. However, we cannot make this claim without further investigating how the inequalities in each district play a role.
+
+Along with that, the population size of the districts could affect the outcomes. Districts can encompass many schools, and it is possible that within a district there is variation in the data. Future work might include investigating a smaller region to explore some of these nuances in order to better understand the connection between computer science course availability in K-12 education and our other variables.
