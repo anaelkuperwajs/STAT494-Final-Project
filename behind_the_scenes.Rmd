@@ -375,7 +375,7 @@ names(mn_acs_ss_act_pred)[93] <- c("TotalClasses")
 
 Although we knew our maps were sufficient, we wanted to add another element to our project. We decided to make the maps interactive and chose to use plotly to achieve this. The plotly functions had an issue with our final dataset and would not map unless we removed all rows with NA; converting the NA values to 0 did not fix the issue, and neither did converting the ‘N’ values we found in two variable columns to 0. In total, dropping the NA rows removed 11 districts. With more time this issue should be explored further. One thing that is important to note is that the districts that were not mapped still show interactivity based on whichever district is closest to the pointer.
 
-Static Graph
+**Static Graph**
 ```{r}
 #population
 ggplot(mn_acs_ss_act_pred, aes(fill = total_pop)) + 
@@ -388,7 +388,7 @@ ggplot(mn_acs_ss_act_pred, aes(fill = total_pop)) +
         plot.title = element_text(hjust = 0.5))
 ```
 
-Plotly
+**Plotly**
 ```{r}
 mn_acs_ss_act_pred_viz <- 
   mn_acs_ss_act_pred %>%  drop_na()
