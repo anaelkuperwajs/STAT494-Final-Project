@@ -73,14 +73,13 @@ ggplotly(
   ggplot(mn_acs_ss_act_pred_viz) +
   geom_sf(aes(fill = NumCat, text = paste(District)),  size = .1, color = "white") +
   scale_fill_viridis_c(option = "B") +
-  labs(title = "Number of CS Course Categories Offered", fill = "") +
+  labs(title = "Variety of CS Courses Offered", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
         plot.title = element_text(hjust = 0.5),
         title =element_text(size=12, face='bold'))
 ) 
-
 ```
 
 
@@ -123,7 +122,7 @@ Percent_White <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_white_only)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent) +
-  labs(title = "Percent of White People", fill = "") +
+  labs(title = "Percent of Population that is White", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -137,7 +136,7 @@ Percent_Black <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_black_only)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent) +
-  labs(title = "Percent of Black People", fill = "") +
+  labs(title = "Percent of Population that is Black", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -150,7 +149,7 @@ Percent_Asian <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_asian_only)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent_format(accuracy = 5L)) +
-  labs(title = "Percent of Asian People", fill = "") +
+  labs(title = "Percent of population that is Asian", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -163,7 +162,7 @@ Percent_Internet_Sub <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_internet_subscription)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent_format(accuracy = 5L)) +
-  labs(title = "Percent Internet Subscription", fill = "") +
+  labs(title = "Percent with an Internet Subscription", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -171,26 +170,12 @@ ggplot(mn_acs_ss_act_pred, aes(fill = perc_internet_subscription)) +
 ```
 
 ```{r}
-#median gross rent
-Gross_Rent <-
-ggplot(mn_acs_ss_act_pred, aes(fill = med_gross_rent)) + 
-  geom_sf(color = NA) + 
-  scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
-  labs(title = "Median Gross Rent", fill = "") +
-  theme(axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"),
-        plot.title = element_text(hjust = 0.5))
-``` 
-
-
-```{r}
 #percent of ppl that receive food stamps or SSI or public assistance
 Percent_Public_Assistance <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_SSI_pubassist_foodstamps)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent) +
-  labs(title = "Percent Public Assistance", fill = "") +
+  labs(title = "Percent Receiving Public Assistance", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -203,33 +188,7 @@ Revenue <-
 ggplot(mn_acs_ss_act_pred, aes(fill = TOTALRE)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
-  labs(title = "Total Revenue", fill = "") +
-  theme(axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"),
-        plot.title = element_text(hjust = 0.5))
-```
-
-```{r}
-#total expenditure
-Expenditure <-
-ggplot(mn_acs_ss_act_pred, aes(fill = TOTALEX)) + 
-  geom_sf(color = NA) + 
-  scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
-  labs(title = "Total Expenditure", fill = "") +
-  theme(axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"),
-        plot.title = element_text(hjust = 0.5))
-```
-
-```{r}
-#other local revenues
-Local_Revenues <-
-ggplot(mn_acs_ss_act_pred, aes(fill = LOCROTH)) + 
-  geom_sf(color = NA) + 
-  scale_fill_viridis_c(option = "magma", labels = scales::dollar) +
-  labs(title = "Other Local Revenues", fill = "") +
+  labs(title = "Total School District Revenue", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -254,20 +213,7 @@ Per_Pupil_Spending <-
   ggplot(mn_acs_ss_act_pred, aes(fill = PPCSTOT)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "B", labels = scales::dollar) +
-  labs(title = "Per Pupil Total Spending", fill = "") +
-  theme(axis.ticks = element_blank(),
-        axis.text = element_blank(),
-        panel.background = element_rect(fill = "white"),
-        plot.title = element_text(hjust = 0.5))
-```
-
-```{r}
-#total current spending for support services
-Support_Spending <-
-ggplot(mn_acs_ss_act_pred, aes(fill = TCURSSC)) + 
-  geom_sf(color = NA) + 
-  scale_fill_viridis_c(option = "magma") +
-  labs(title = "Total Spending for Support Services", fill = "") +
+  labs(title = "Per Pupil Total Spending by School District", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -518,10 +464,17 @@ Each bar shows how much the RMSE would change if the corresponding variable was 
 
 
 # Implications
-TODO: writeups
+
+The first thing that is critical to highlight is that correlation does not imply causation. Although this project looks at connections between various datasets and different variables, we are not suggesting that any of our predictors directly alter computer science course availability. It is possible, given the work that we have done, but without an experiment we cannot be certain about causation.
+
+Previous work does exist about how disparities in education are related to many of the variables we displayed in our project, such as household income and race. It is an intersectional issue that combines many layers of societal disparities. For instance, it has been proven that ACT and standardized test scores show more about family wealth and privilege than actual intelligence or likelihood for success. Therefore, it is logical that the same districts that have high average ACT scores will have high median household incomes. Due to the fact that computer science is a newer field, less work has been done specifically about this subject. The rise in availability in recent years has also been focused more on college and graduate school, leading to K-12 education to have received less attention.
+
+That being said, there are many nuances to this issue that we could not address within the scope of our project. One variable we looked at was race, and while the connection between race and educational disparities has been studied, that can be difficult to see in some of our work. We hypothesize that there are a few reasons for this. First, Minnesota in general is largely populated by White people. Furthermore, the place where there is the most diversity, near the Twin Cities, is also a place with considerable inequality. Without this information, it may seem as though there is correlation between greater diversity, higher median household income, and computer science course availability. However, we cannot make this claim without further investigating how the inequalities in each district play a role.
+
+Along with that, the population size of the districts could affect the outcomes. Districts can encompass many schools, and it is possible that within a district there is variation in the data. Future work might include investigating a smaller region to explore some of these nuances in order to better understand the connection between computer science course availability in K-12 education and our other variables.
 
 
-For more information about how we created this project, please visit:
+**For more information about how we created this project, please visit:**
 
 GitHub: https://github.com/anaelkuperwajs/STAT494-Final-Project
 
