@@ -49,7 +49,7 @@ Link: https://www.census.gov/programs-surveys/school-finances.html
 
 **Minnesota School Districts**
 
-This data set includes the name of all school districts in Minnesota as well as their district numbers, which was created in 2015. This data came from the Minnesota State Department of Human Services. We joined the district numbers from this data set to the American Community Survey data, which only had the district names. Accessing district numbers and names was integral in connecting our various data sets, because the common piece of information between our ideas is district information.
+This data set includes the name of all school districts in Minnesota as well as their district numbers, which was created in 2015. This data came from the Minnesota State Department of Human Services. We joined the district numbers from this data set to the American Community Survey data, which only had the district names. Accessing district numbers and names was integral in connecting our various data sets because the common piece of information between our ideas is district information.
 
 Link: https://www.dhs.state.mn.us/main/groups/county_access/documents/pub/dhs16_193591.pdf
 
@@ -90,7 +90,7 @@ ss <- readxl::read_excel("elsec18t.xls") # ASSSF
 
 **MCCC Data**
 
-The data from the Department of Education was neatly split into spreadsheets based on course classifications. In order to use this data more easily, we manually combined all the spreadsheets to have one, connected data set with all the courses offered. We had to manually add in the categories of course classification and category in order to create one data set. Furthermore, in order to be able to connect to the other data sets, we needed to have the district number as its own variable. In this data set, the district name and number were combined as one variable, so we used regular expressions to split the name and number. This was fairly simple, due to the consistency in the district variable having the number as the last 7 digits.
+The data from the Department of Education was neatly split into spreadsheets based on course classifications. In order to use this data more easily, we manually combined all of the spreadsheets into one data set with all of the courses offered. We had to manually add in the columns for course classification and category in order to create one data set. Furthermore, in order to connect to the other data sets, we needed to have the district number as its own variable. In this data set, the district name and number were combined as one variable, so we used regular expressions to split the name and number. This was fairly simple, due to the district variable consistently having the number as the last 7 digits.
 
 ```{r}
 course_catalog_predictors <-
@@ -104,7 +104,7 @@ course_catalog %>%
 
 **ACS Data**
 
-The ACS data was already in tidy format, which was convenient for our purposes. We focused on narrowing down variables to the ones that were important to our project and renaming them so that we could easily understand the meaning of the variable. Many of the districts had the word 'Minnesota' in it, so we removed that because all of our data is about Minnesota. Lastly, we altered the data set to remove any NA values.
+The ACS data was already in a tidy format, which was convenient for our purposes. We focused on narrowing down variables to the ones that were important to our project and renaming them so that we could easily understand the meaning of the variable. Many of the districts had the word 'Minnesota' in it, so we removed that because all of our data is about Minnesota. We also created some percentage variables because they would be more meaningful for our exploration than the raw numbers that tidycensus provided us with.
 
 ```{r}
 #census_api_key("key")
@@ -171,7 +171,7 @@ mn_2019_census_nogeom <- mn_2019_census %>%
 
 **ACT Data**
 
-To begin with, this data set included a range of years, so we filtered the graduation year to our year of interest, which was 2018. This data set also originally had extra variables that were irrelevant to our interests, so our cleaning process involved removing predictors so that we were only left with district name and average composite ACT score. The district name included the district number, so to create two separate values we used regular expressions. The district number was consistently located at the same spot in the name.
+This data set included a range of years, so we filtered the graduation year to our year of interest: 2018. This data set also originally had extra variables that were irrelevant to our interests, so our cleaning process involved removing predictors so that we were only left with district name and average composite ACT score. The district name included the district number, so in order to create two separate values we used regular expressions. The district number was consistently located at the same spot in the name, so splitting them was relatively straightforward.
 
 ```{r}
 act_clean <-
@@ -202,7 +202,7 @@ act %>%
 
 **Annual Survey of School System Finances**
 
-Fortunately, we did not have to clean this data set. Originally, this data set included information about all the states, but the process of data joining narrowed down the data to just hold information about Minnesota. Below is code that allowed us to view the data entries related to Minnesota before going through the process of data joining.
+Fortunately, we did not have to clean this data set. Originally, this data set included information about all of the states, but the process of data joining narrowed down the data to just contain information about Minnesota. Below is the code that allowed us to view the data entries related to Minnesota before going through the process of data joining.
 
 ```{r}
 ss %>%
@@ -216,12 +216,12 @@ ss %>%
 
 **Minnesota School Districts**
 
-This data set originally had four categories, district name, district number, start date, and end date. To prepare this data set we removed the start and end date variables. In order to join it with the ACS data set, we had to compare the district names in both to ensure that they aligned. Only 16 district names didn't match, which was a small number, so we manually changed the district names to match the names in the ACS data set.
+This data set originally had four categories: district name, district number, start date, and end date. To prepare this data set for joining, we removed the start and end date variables. In order to join it with the ACS data set, we had to compare the district names in both to ensure that they aligned. Only 16 district names didn't match, which was a small number, so we manually changed the district names to match the names in the ACS data set.
 
 
 # Data Joining
 
-Part of the work we did after finding, importing, and cleaning our various data sets was joining them together. An important piece for this was ensuring the district names and numbers aligned, and most of that was completed in the previous step. Here is our code for joining the data sets:
+Part of the work we did after finding, importing, and cleaning our various data sets was joining them together. An important piece for this was ensuring that the district names and numbers aligned, and most of that was completed in the previous step. Here is our code for joining the data sets:
 
 ```{r}
 # read in data sets
@@ -318,7 +318,7 @@ mn_acs_ss_act <- mn_acs_ss %>%
   left_join(mn_act, by = c("District.Nbr" = "Dist.Num"))
 ```
 
-Finally before we export the data, we can remove the redundant names and ID columns from the school survey and ACT data sets as we'll stick to their format from the ACS.
+Finally, before we can export the data, we will remove the redundant names and ID columns from the school survey and ACT data sets as we'll stick to their format from the ACS.
 
 ```{r}
 mn_acs_ss_act <- mn_acs_ss_act %>%
@@ -351,9 +351,9 @@ mn_acs_ss_act_pred <- mn_acs_ss_act %>%
 
 # Mapping and Shape Files
 
-While we had all the data necessary to create useful graphs and tables, one of our goals was to create visualizations and maps. Our data is focused on the state of Minnesota and all of it is segmented by school districts, therefore we believed an interesting and informative way to present this data is with maps. The piece that was missing for us to accomplish this was the shape files for the districts. Shape files are notoriously tricky, and implementing this was a challenge.
+While we had all the data necessary to create useful graphs and tables, one of our goals was to create visualizations and maps. Our data is focused on the state of Minnesota and all of it is segmented by school districts. Therefore, we believed that an interesting and informative way to present this data is through maps. The piece that was missing for us to accomplish this was the shape files for the districts. Shape files are notoriously tricky, and implementing this was a challenge.
 
-Once we added a column for the geometry of each district (which was necessary for mapping), we could no longer use the write and read csv functions we were so accustomed to. Unfortunately, we found this out the hard way. When we exported our final data set using `write_csv()` and read it in another file with `read_csv()`, our data values were completely altered. We hypothesized that this could be due to how each geometry feature is saved as a list of coordinates separated by commas, which would interfere with the csv (comma-separated values) format. Fortunately, we quickly discovered that `st_write()` and `st_read()` from the `sf` package were the functions we needed to use instead. These were specifically made for exporting and importing files with simple geometry features. One issue we encountered with exporting shape files is that certain column names were abbreviated in the process. For example, `male_5to9` became `mal_5t9` and `total_pop` became `totl_pp`. As we could not detect any abbreviating pattern, we decided the simplest and fastest solution was to rename our variables back to their original names after we read in the data.
+Once we added a column for the geometry of each district (which was necessary for mapping), we could no longer use the write and read_csv functions that we were so accustomed to. Unfortunately, we found this out the hard way. When we exported our final data set using `write_csv()` and read it in another file with `read_csv()`, our data values were completely altered. We hypothesized that this could be due to how each geometry feature is saved as a list of coordinates separated by commas, which would interfere with the csv (comma-separated values) format. Fortunately, we discovered that `st_write()` and `st_read()` from the `sf` package were the functions we needed to use instead. These were specifically made for exporting and importing files with simple geometry features. One issue we encountered with exporting shape files is that certain column names were abbreviated in the process. For example, `male_5to9` became `mal_5t9` and `total_pop` became `totl_pp`. In the end, we decided that the simplest and fastest solution was to rename our variables back to their original names after we read in the data.
 
 ```{r}
 ##### RUN THIS CHUNK WHENEVER YOU READ IN THE DATA
@@ -377,9 +377,9 @@ names(mn_acs_ss_act_pred)[93] <- c("TotalClasses")
 
 # Visualizations and Plotly
 
-Although we knew our maps were sufficient, we wanted to add another element to our project. We decided to make the maps interactive and chose to use plotly to achieve this. The plotly functions had an issue with our final data set and would not map unless we removed all rows with NA; converting the NA values to 0 did not fix the issue, and neither did converting the ‘N’ values we found in two variable columns to 0. In total, dropping the NA rows removed 11 districts. With more time this issue should be explored further. One thing that is important to note is that the districts that were not mapped still show interactivity based on whichever district is closest to the pointer.
+Although we knew our maps up to this point were telling, we wanted to add another element to our project. We decided to make the maps interactive and chose to use plotly to achieve this. The plotly functions had an issue with our final data set and would not map unless we removed all rows with NA; converting the NA values to 0 did not fix the issue, and neither did converting the ‘N’ values we found in two variable columns to 0. In total, dropping the NA rows removed 11 districts. With more time, this issue should be explored further. Something that is important to note is that the districts that were not mapped still show interactivity based on whichever district is closest to the pointer.
 
-Below we have two examples from our final product, one of a static graph and one of a plotly graph. Most of our visualizations and maps were built in the same way, so we did not include all of the visualization code in this document.
+Below we have two examples from our final product: one of a static graph and one of a plotly graph. Most of our visualizations and maps were built in the same way, so we did not include all of the visualization code in this document.
 
 **Static Graph**
 ```{r}
@@ -429,7 +429,7 @@ knit_print.data.frame <- function(x, ...) {
 registerS3method("knit_print", "data.frame", knit_print.data.frame)
 ```
 
-We first read in the data, cleaning up variable names, as they were abbreviated once exported to shape file format.
+We first read in the data and cleaned up variable names, as they were abbreviated after being exported to shape file format.
 
 ```{r}
 # read in the data
@@ -457,7 +457,7 @@ names(mn)[93] <- c("TotalClasses")
 str(mn)
 ```
 
-Looking at the variables and their types, we were dealing with predominantly numerical variables. `GEOID`, `District`, `District.Nbr`, `CONUM`, `CSA`, and `CBSA` are ID variables so in the recipe we'll have to specify that so they wouldn't be included in the model.
+After looking at the variables and their types, we noticed that we were dealing with predominantly numerical variables. `GEOID`, `District`, `District.Nbr`, `CONUM`, `CSA`, and `CBSA` are ID variables, so we will have to specify that in the recipe so that they won't be included in the model.
 
 We decided to drop the geometry column and convert the data to a regular data frame format for this part because it was not necessary for the models and including it led to issues running some functions.
 
@@ -514,7 +514,7 @@ mn %>%
   count(n_miss_all)
 ```
 
-We had one observation missing 65 variables, and this was the "Remainder of Minnesota" observation from the ACS. The NAs caused issues when we tried to fit a LASSO and random forest model so we removed them beforehand.
+We had one observation missing 65 variables, and this was the "Remainder of Minnesota" observation from the ACS. The NAs caused issues when we tried to fit a LASSO and random forest model, so we removed them beforehand.
 
 ```{r}
 mn <- mn %>%
@@ -646,7 +646,7 @@ mn_lm_fit %>%
 
 **LASSO**
 
-To deal with this, we switched to LASSO to shrink coefficients to zero and thereby eliminate insignificant variables from the model.
+To deal with the massive number of predictors, we switched to LASSO to shrink coefficients to zero and thereby eliminate insignificant variables from the model.
 
 ```{r lasso}
 # define the model type
@@ -675,7 +675,7 @@ mn_lasso_tune <-
   )
 ```
 
-We chose the best parameter based on RMSE and finalized the workflow / model. Then we looked at the variables that were retained by LASSO.
+We chose the best parameter based on RMSE and finalized the workflow / model. We then looked at the variables that were retained by LASSO.
 
 ```{r}
 # show the best penalty parameter
@@ -708,7 +708,7 @@ mn_lasso_final_mod %>%
 
 **Random forest**
 
-Our last candidate was a random forest model.
+Our last model candidate was a random forest model.
 
 ```{r}
 # define the model type
@@ -762,7 +762,7 @@ mn_rf_test %>%
 
 **Residuals**
 
-Since the RMSE from the regular lm model was rather high, we decided to only compare the LASSO and random forest moving forward. We computed their overall performance metrics and looked at the residuals.
+Since the RMSE from the regular lm model was rather high, we decided to only compare the LASSO and random forest models moving forward. We computed their overall performance metrics and looked at the residuals.
 
 ```{r}
 lasso_explain <- 
