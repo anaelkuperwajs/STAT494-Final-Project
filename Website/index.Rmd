@@ -92,7 +92,7 @@ ggplotly(
 
 Due to the fact that public schools are funded by property taxes, course availability is usually an intersectional issue that is reliant on other factors, such as redlining and gentrification. We hypothesized that there would be a correlation between course availability and overall wealth and access to resources of each district. In this section, we explore some of the variables that we expected to have a significant relationship with computer science course availability. We retrieved this data from the U.S. Census Bureau and the Minnesota State Department of Education.
 
-**Key Observations:**
+### Key Observations:
 * Notice in the plots below that general wealth is clustered in the Twin Cities Metro area, which is also the area that is the most racially diverse. That being said, Minnesota as a whole has a large White population.
 * The median household income in the center of the Twin Cities Metro area decreases when compared to the immediate surrounding area, as seen by the purple center in a lighter colored circle. One possible explanation is a wide range of household incomes in that district.
 * The areas with a higher percentage of people receiving public assistance appears to be an inverse of where the general wealth lies in Minnesota.
