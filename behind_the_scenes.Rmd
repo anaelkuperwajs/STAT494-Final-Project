@@ -107,7 +107,7 @@ course_catalog %>%
 The ACS data was already in a tidy format, which was convenient for our purposes. We focused on narrowing down variables to the ones that were important to our project and renaming them so that we could easily understand the meaning of the variable. Many of the districts had the word 'Minnesota' in it, so we removed that because all of our data is about Minnesota. We also created some percentage variables because they would be more meaningful for our exploration than the raw numbers that tidycensus provided us with.
 
 ```{r}
-#census_api_key("key")
+# census_api_key("key")
 
 mn_2019_census <- get_acs(state = "MN", 
                          geography = "school district (unified)",
@@ -732,7 +732,7 @@ mn_rf_fit <-
 ```
 
 
-### Model evaluation and comparison
+### Model Evaluation and Comparison
  
 ```{r}
 # fit model with best tuning parameter(s) to training data and apply to test data
@@ -824,10 +824,12 @@ rf_explain <-
   )
 # compute variable importance
 rf_var_imp <- model_parts(rf_explain)
+```
+
+```{r plot, echo=FALSE, fig.align="center", fig.width=10, fig.height=12}
 # plot
 plot(rf_var_imp, show_boxplots = TRUE)
 ```
-
 
 # Implications
 
