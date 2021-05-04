@@ -174,7 +174,7 @@ Percent_Internet_Sub <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_internet_subscription)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent_format(accuracy = 5L)) +
-  labs(title = "Percent of Population with an Internet Subscription", fill = "") +
+  labs(title = "Percent with an Internet Subscription", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
