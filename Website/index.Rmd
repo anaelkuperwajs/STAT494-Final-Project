@@ -51,7 +51,7 @@ names(mn_acs_ss_act_pred)[93] <- c("TotalClasses")
 
 # Computer Science K-12 Course Availability in Minnesota
 
-To begin, let's explore the computer science course availability that currently exists in the state of Minnesota for K-12 education. The two plots below show the various public school districts in the state with the amount and variety of computer science courses offered in each district.
+To begin, let's explore the computer science course availability that currently exists in the state of Minnesota for K-12 education. The two plots below show the various public school districts in the state with the amount and variety of computer science courses offered in each district (ie. courses focused on computer literacy, management information systems, or network systems).
 
 These plotly maps are an interactive tool that can both visually and textually show important information. You can hover over a district with your cursor and a text box will appear with relevant information, making for an easy comparison between districts.
 
