@@ -16,7 +16,7 @@ Welcome to our final project! We are Macalester College students (class of 2021/
 
 Computer science is a field that is growing rapidly in the United States and around the world today. Industry is constantly releasing advancements in computer science and technology is becoming more ingrained into our daily lives with each passing day. Therefore, with an increase in technology usage, the demand for computer scientists has increased in popularity. Due to this fast-growing field, educational institutions and systems are increasing the amount of computer science courses offered in order to train more future computer scientists.
 
-These increases started at the college level, where majoring in computer science is now becoming a widely available option. At Macalester College, it is one of the largest departments for both students and faculty. While the availability of courses at the college level is a good start, there is a big push to have computer science courses offered in K-12 education. Offering computer science courses in elementary and secondary schools provides an opportunity for kids to expose themselves to coding, potentially leading to younger students discovering new interests and actively engaging with computer science earlier. Oftentimes, being exposed to computer science at a younger age can make students more comfortable with the material and the field later on, which can contribute to a more empowered and diverse set of students entering the workforce or higher education. Given the importance of having computer science courses available in K-12 education, we decided to investigate the availability of computer science courses in K-12 school districts in Minnesota. In this project, we explore the connection between a variety of data sets related to this topic, including K-12 computer science course availability in Minnesota, demographic information from the U.S. census, ACT scores, and school district funding.
+These increases started at the college level, where majoring in computer science is now becoming a widely available option. At Macalester College, it is one of the largest departments for both students and faculty. While the availability of courses at the college level is a good start, there is a big push to have computer science courses offered in K-12 education. Offering computer science courses in elementary and secondary schools provides an opportunity for kids to expose themselves to coding, potentially leading to younger students discovering new interests and actively engaging with computer science earlier. Oftentimes, being exposed to computer science at a younger age can make students more comfortable with the material and the field later on, which can contribute to a more empowered and diverse set of students entering the workforce or higher education. Given the importance of having computer science courses available in K-12 education, we decided to investigate the availability of computer science courses in K-12 school districts in Minnesota. In this project, we explore the connection between a variety of data sets related to this topic, including K-12 computer science course availability in Minnesota, demographic information from the U.S. census, ACT scores, and school district financial information.
 
 ```{r}
 library(tidyverse)
@@ -51,9 +51,12 @@ names(mn_acs_ss_act_pred)[93] <- c("TotalClasses")
 
 # Computer Science K-12 Course Availability in Minnesota
 
-To begin, let's explore the computer science course availability that currently exists in the state of Minnesota for K-12 education. The two plots below show the various public school districts in the state with the amount and variety of computer science courses offered in each district (ie. courses focused on computer literacy, management information systems, or network systems).
+To begin with, let’s explore what computer science course availability already exists in the state of Minnesota for K-12 education. The two plots below show the various public school districts in the state with the amount and variety of computer science courses offered in each district. The computer science categories include Computer Literacy, Management Information Systems, Network Systems, Computer Science/Programming, Media Technology, and Information Support and Services. Across Minnesota the average number of computer science courses available is roughly six, and the average variety of computer science courses is roughly two. 
 
-These plotly maps are an interactive tool that can both visually and textually show important information. You can hover over a district with your cursor and a text box will appear with relevant information, making for an easy comparison between districts.
+As seen in the first map, the St. Paul Public School District has the most computer science course offerings, with a total of 54 courses. While Rosemount-Apple Valley-Eagan District and Anoka-Hennepin School District have the next highest course offerings with 45 and 43 courses respectively, the rest of the districts do not top 25 total courses. These school districts are striking compared to the state average of six, as can be seen by the shocking yellow in the middle of a majority black and purple map. There are 86 K-12 school districts that offer no computer science courses. The second map illustrating the variety of computer science courses offered does not show as much of a staggering difference between the school districts. There are 146 school districts that offer one or less computer science course categories, and 176 school districts that offer more than one type of computer science course.
+
+These plotly maps are an interactive tool that both visually and textually shows important information. You can hover over a district and a text box will appear with relevant information, making for an easy comparison between districts.
+
 
 ```{r}
 mn_acs_ss_act_pred_viz <- 
@@ -89,7 +92,11 @@ ggplotly(
 
 Due to the fact that public schools are funded by property taxes, course availability is usually an intersectional issue that is reliant on other factors, such as redlining and gentrification. We hypothesized that there would be a correlation between course availability and overall wealth and access to resources of each district. In this section, we explore some of the variables that we expected to have a significant relationship with computer science course availability.
 
-Notice in the plots below that general wealth seems to be clustered in the Twin Cities Metro areas, which are also the areas that are the most racially diverse (although Minnesota as a whole is very white).  Also, the percentage of home internet subscriptions seems to be higher in the Twin Cities.
+### Key Observations: 
+* Notice in the plots below that general wealth seems to be clustered in the Twin Cities Metro areas, which are also the areas that are the most racially diverse (although Minnesota as a whole is very white). 
+* The areas with a higher percentage of people receiving public assistance looks to be an inverse of where the general wealth lies in Minnesota. 
+* The percentage of home internet subscriptions seems to be higher in the Twin Cities. 
+* The population map and the total school district revenue map look incredibly similar, suggesting that the population size might have a large effect on district funding. When controlled for population, the revenues should match up pretty evenly between districts.
 
 ADD WRITING HERE
 
@@ -107,7 +114,7 @@ ggplot(mn_acs_ss_act_pred, aes(fill = total_pop)) +
 ```
 
 ```{r}
-#use this
+#household income
 Household_Income <-
 mn_acs_ss_act_pred %>%
   ggplot(aes(fill = med_household_inc_12mo)) + 
@@ -153,7 +160,7 @@ Percent_Asian <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_asian_only)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent_format(accuracy = 5L)) +
-  labs(title = "Percent of population that is only Asian", fill = "") +
+  labs(title = "Percent of Population that is only Asian", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -481,7 +488,7 @@ One that is critical to keep in mind is that correlation does not imply causatio
 
 Previous work does exist about how disparities in education are related to many of the variables we displayed in our project, such as household income and race. For instance, it has been proven that ACT and standardized test scores show more about family wealth and privilege than actual intelligence or likelihood for success. Therefore, it is logical that the same districts that have high average ACT scores will have high median household incomes due to systemic inequality. Because computer science is a newer field, less work has been done specifically about this subject. The rise in available literature on this subject in recent years has also been focused more on college and graduate school, with K-12 education receiving less attention.
 
-That being said, there are many nuances to this issue of course availability and inequality that we could not address within the scope of our project. One variable we looked at was race, and while the connection between race and educational disparities has been studied, that can be difficult to see in some of our work. We hypothesize that there are a few reasons for this. First, Minnesota in general is largely populated by White people. Furthermore, the places where there is the most racial diversity (near the Twin Cities) is also a place with considerable inequality. Without this information, it may seem as though there is correlation between greater diversity, higher median household income, and computer science course availability. However, we cannot make this claim without further investigating how the inequalities within each district play a role.
+That being said, there are many nuances to this issue of course availability and inequality that we could not address within the scope of our project. One variable we looked at was race, and while the connection between race and educational disparities has been studied, that can be difficult to see in some of our work. We hypothesize that there are a few reasons for this. First, Minnesota in general is largely populated by White people. Furthermore, the places with the most racial diversity (near the Twin Cities) are also places with considerable inequality. Without this information, it may seem as though there is correlation between greater diversity, higher median household income, and computer science course availability. However, we cannot make this claim without further investigating how the inequalities within each district play a role.
 
 Along with that, the population size of the districts could affect the outcomes. Districts can encompass many schools, and it is possible that within a district there is variation in demographics and course availability. Future work might include investigating a smaller region to explore some of these nuances in order to better understand the connection between computer science course availability in K-12 education and our other variables.
 
