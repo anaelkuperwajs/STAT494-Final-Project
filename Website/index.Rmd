@@ -51,11 +51,11 @@ names(mn_acs_ss_act_pred)[93] <- c("TotalClasses")
 
 # Computer Science K-12 Course Availability in Minnesota
 
-To begin with, let’s explore what computer science course availability already exists in the state of Minnesota for K-12 education. The two plots below show the various public school districts in the state with the amount and variety of computer science courses offered in each district. The computer science categories include Computer Literacy, Management Information Systems, Network Systems, Computer Science/Programming, Media Technology, and Information Support and Services. Across Minnesota the average number of computer science courses available is roughly six, and the average variety of computer science courses is roughly two. 
+To begin with, let’s explore what computer science course availability already exists in the state of Minnesota for K-12 education. This information comes from the Minnesota State Department of Education, which allows public access to their data. The two plots below show the various public school districts in the state with the amount and variety of computer science courses offered in each district. The computer science categories include Computer Literacy, Management Information Systems, Network Systems, Computer Science/Programming, Media Technology, and Information Support and Services. Across Minnesota the average number of computer science courses available is roughly six, and the average variety of computer science courses is approximately two.
 
 As seen in the first map, the St. Paul Public School District has the most computer science course offerings, with a total of 54 courses. While Rosemount-Apple Valley-Eagan District and Anoka-Hennepin School District have the next highest course offerings with 45 and 43 courses respectively, the rest of the districts do not top 25 total courses. These school districts are striking compared to the state average of six, as can be seen by the shocking yellow in the middle of a majority black and purple map. There are 86 K-12 school districts that offer no computer science courses. The second map illustrating the variety of computer science courses offered does not show as much of a staggering difference between the school districts. There are 146 school districts that offer one or less computer science course categories, and 176 school districts that offer more than one type of computer science course.
 
-These plotly maps are an interactive tool that both visually and textually shows important information. You can hover over a district and a text box will appear with relevant information, making for an easy comparison between districts.
+These plotly maps are an interactive tool that both visually and textually show important information. You can hover over a district and a text box will appear with relevant information, making for an easy comparison between districts.
 
 
 ```{r}
@@ -90,15 +90,16 @@ ggplotly(
 
 # Demographics, ACT Scores, and School District Finances
 
-Due to the fact that public schools are funded by property taxes, course availability is usually an intersectional issue that is reliant on other factors, such as redlining and gentrification. We hypothesized that there would be a correlation between course availability and overall wealth and access to resources of each district. In this section, we explore some of the variables that we expected to have a significant relationship with computer science course availability.
+Due to the fact that public schools are funded by property taxes, course availability is usually an intersectional issue that is reliant on other factors, such as redlining and gentrification. We hypothesized that there would be a correlation between course availability and overall wealth and access to resources of each district. In this section, we explore some of the variables that we expected to have a significant relationship with computer science course availability. We retrieved this data from the U.S. Census Bureau and the Minnesota State Department of Education.
 
-### Key Observations: 
-* Notice in the plots below that general wealth seems to be clustered in the Twin Cities Metro areas, which are also the areas that are the most racially diverse (although Minnesota as a whole is very white). 
-* The areas with a higher percentage of people receiving public assistance looks to be an inverse of where the general wealth lies in Minnesota. 
-* The percentage of home internet subscriptions seems to be higher in the Twin Cities. 
-* The population map and the total school district revenue map look incredibly similar, suggesting that the population size might have a large effect on district funding. When controlled for population, the revenues should match up pretty evenly between districts.
-
-ADD WRITING HERE
+**Key Observations:**
+* Notice in the plots below that general wealth is clustered in the Twin Cities Metro area, which is also the area that is the most racially diverse. That being said, Minnesota as a whole has a large White population.
+* The median household income in the center of the Twin Cities Metro area decreases when compared to the immediate surrounding area, as seen by the purple center in a lighter colored circle. One possible explanation is a wide range of household incomes in that district.
+* The areas with a higher percentage of people receiving public assistance appears to be an inverse of where the general wealth lies in Minnesota.
+* The percentage of home internet subscriptions is higher in the Twin Cities.
+* The population map and the total school district revenue map look incredibly similar, suggesting that the population size might have a large effect on district funding. When controlled for population, the revenues match up evenly between districts.
+* In general, when the total population is lower, the per pupil total spending increases. However, it is not a perfect trend. One exception is the center of the Twin Cities Metro area, where per pupil total spending and total population increases.
+* There is no distinct trend or pattern in the average ACT composite score map, however there is a loose association with higher scores closer to the Twin Cities Metro area. The only school districts that are colored in black are towards the outer edges of the state.
 
 ```{r}
 #population
@@ -133,7 +134,7 @@ Percent_White <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_white_only)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent) +
-  labs(title = "Percent of Population that is only White", fill = "") +
+  labs(title = "Percent of Population that is Only White", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -147,7 +148,7 @@ Percent_Black <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_black_only)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent) +
-  labs(title = "Percent of Population that is only Black", fill = "") +
+  labs(title = "Percent of Population that is Only Black", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -160,7 +161,7 @@ Percent_Asian <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_asian_only)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent_format(accuracy = 5L)) +
-  labs(title = "Percent of Population that is only Asian", fill = "") +
+  labs(title = "Percent of Population that is Only Asian", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -173,7 +174,7 @@ Percent_Internet_Sub <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_internet_subscription)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent_format(accuracy = 5L)) +
-  labs(title = "Percent with an Internet Subscription", fill = "") +
+  labs(title = "Percent of Population with an Internet Subscription", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -186,7 +187,7 @@ Percent_Public_Assistance <-
 ggplot(mn_acs_ss_act_pred, aes(fill = perc_SSI_pubassist_foodstamps)) + 
   geom_sf(color = NA) + 
   scale_fill_viridis_c(option = "magma", labels = scales::percent) +
-  labs(title = "Percent Receiving Public Assistance", fill = "") +
+  labs(title = "Percent of Population Receiving Public Assistance", fill = "") +
   theme(axis.ticks = element_blank(),
         axis.text = element_blank(),
         panel.background = element_rect(fill = "white"),
@@ -242,9 +243,9 @@ grid.arrange(Population, Percent_White, Percent_Black, Percent_Asian,
 
 # Connections
 
-Now that we have introduced you to our various data sets, we will show you how they connect and see if there is a correlation between course availability and demographic variables, ACT scores, and school district funding.
+Now that we have introduced you to our various data sets, we will show you how they connect and investigate if there is a correlation between course availability and demographic variables, ACT scores, and school district funding.
 
-Both maps include the district population, name, and either the total number of computer science courses offered or the number of computer science course categories offered. The first map includes the median household income, percentage of white people, and average ACT score, while the second map includes the total revenue and total spending per pupil. These maps also use plotly, so you can use the hover feature to view the variable information.
+Both maps include the district population and name. The first map examines the total number of computer science courses offered and the second map highlights the number of computer science course categories offered. The first map also includes the median household income, the percentage of the population that identifies as entirely White, and the average ACT score, while the second map includes the total revenue and the total spending per pupil. These maps use plotly, similar to the first section above, so you can use the hover feature to view the variable information.
 
 ```{r, echo = FALSE}
 #Should I add subtitles or change the titles?
@@ -282,7 +283,7 @@ ggplotly(
 ) 
 ```
 
-We then wanted to take a closer look at two specific Minnesota school districts that differ drastically in computer science course availability to see how they varied in demographics.  Below, we highlighted the two districts we will focus on for the subsequent comparisons: Red Lake Public School District (the district in northern Minnesota, located on the Red Lake Reservation) and St. Paul Public School District.  We chose these two particular districts because Red Lake Public School District had the lowest total number of Computer Science courses offered, while St. Paul Public School District had the highest.
+We then wanted to take a closer look at two specific Minnesota school districts that differ drastically in computer science course availability to see how they varied in demographics. Below, we highlighted the two districts we will focus on for the subsequent comparisons: Red Lake Public School District (the district in northern Minnesota, located on the Red Lake Reservation) and St. Paul Public School District. We chose these two particular districts because Red Lake Public School District had the lowest total number of Computer Science courses offered, while St. Paul Public School District had the highest.
 
 ```{r}
 st_paul_pub_school <- mn_acs_ss_act_pred %>%
@@ -306,7 +307,7 @@ mn_acs_ss_act_pred %>%
   ggtitle("Profile of Two Minnesota School Districts") #change title?
 ```
 
-From these two district profiles, one can see that not only does St. Paul Public School District have more course offerings and categories, but the percentage of people who are white, median household income, and percentage of people with internet subscriptions in their homes are a lot higher than in the Red Lake Public School District.  These comparisons help us confirm the hypothesis that generational wealth and race are inherently linked to quality of public school education.
+From these two district profiles, one can see that not only does St. Paul Public School District have more course offerings and categories, but the percentage of people who are White, median household income, and percentage of people with internet subscriptions in their homes are much higher than in the Red Lake Public School District. These comparisons help us confirm the hypothesis that generational wealth and race are inherently linked to quality of public school education.
 
 ```{r}
 ggplot(red_lake_pub_school) + 
@@ -354,9 +355,9 @@ ggplot(st_paul_pub_school) +
 
 # Predicting Computer Science K-12 Course Availability in Minnesota
 
-To understand what factors have the largest influence on course availability, we created two models to predict the amount of computer science courses per district in the state of Minnesota. The first was a LASSO model, a linear regression method that shrinks coefficients (some even to zero) to eliminate insignificant variables and weight them accordingly. With over 80 possible predictors, it would be difficult to quantitatively select variables for ordinary least squares and including every variable would lead to overfitting, where the model is no longer accurate on other data sets (because it was fit so precisely to this specific one). The second model that we fitted was a random forest. A random forest consists of a large number of decision trees and averages the prediction over these trees. 
+To understand what factors have the largest influence on course availability, we created two models to predict the amount of computer science courses per district in the state of Minnesota. The first was a LASSO model, a linear regression method that shrinks coefficients (some even to zero) to eliminate insignificant variables and weigh them accordingly. With over 80 possible predictors, it would be difficult to quantitatively select variables for ordinary least squares and including every variable would lead to overfitting, where the model is no longer accurate on other data sets (because it was fit so precisely to this specific one). The second model that we fitted was a random forest. A random forest consists of a large number of decision trees and averages the prediction over these trees. 
 
-Before fitting the models, the main transformation we had to perform was log-transformation for many of the variables from the Annual Survey of School System Finances. These were raw tallies of revenue or expenditure, so the data were right-skewed with a few districts having significantly higher values than the majority. Based on the RMSE, the random forest greatly outperformed the LASSO, with an RMSE of approximately 1.86 compared to the LASSO's 4.11. 
+Before fitting the models, the main transformation we had to perform was log-transformation for many of the variables from the Annual Survey of School System Finances. These were raw tallies of revenue or expenditure, so the data were right-skewed with a few districts having significantly higher values than the majority. Based on the RMSE, the random forest greatly outperformed the LASSO, with an RMSE of approximately 1.86 compared to the LASSO's 4.11.
 
 In a random forest model, some variables will have higher predictive power and contribute more to the outcome. Below is a plot ranking our predictors in terms of their importance:
 
@@ -479,16 +480,16 @@ rf_var_imp <- model_parts(rf_explain)
 plot(rf_var_imp, show_boxplots = TRUE)
 ```
 
-Each bar shows how much the RMSE would change if the corresponding variable was permuted. If permuting a certain variable significantly increases the RMSE relative to permuting other variables then it would be important. Here, the RMSE increases the most when revenue from the Child Nutrition Act, spending on instructional staff, and total expenditure are permuted. The highest-ranking variables all came from the School Survey, and the top 3 most important demographic variables from the ACS are percent of the total population who are Black alone, percent of households with Internet subscription, and percent of households receiving SSI, public assistance, or food stamps (in each district). The variables at the bottom that showed no change in RMSE if permuted were excluded from the modeling at the start because they are ID or raw demographic variables (for these we transformed them into percentages).
+Each bar shows how much the RMSE would change if the corresponding variable was permuted. If permuting a certain variable significantly increases the RMSE relative to permuting other variables, then it would be important. Here, the RMSE increases the most when revenue from the Child Nutrition Act, spending on instructional staff, and total expenditure are permuted. The highest-ranking variables all came from the School Survey, and the top 3 most important demographic variables from the ACS are percent of the total population who are Black only, percent of households with internet subscription, and percent of households receiving SSI, public assistance, or food stamps (in each district). The variables at the bottom that showed no change in RMSE if permuted were excluded from the modeling at the start because they are ID or raw demographic variables (for these we transformed them into percentages).
 
 
 # Implications
 
-One that is critical to keep in mind is that correlation does not imply causation. Although this project looks at connections between various data sets and different variables, we are not suggesting that any of our predictors directly alters computer science course availability. It is possible that that is the case, given the work that we have done, but without an experiment or accounting for potential confounders (other variables that may affect the predictor and outcome variables), we cannot be certain about causation.
+One note that is critical to keep in mind is that correlation does not imply causation. Although this project looks at connections between various data sets and different variables, we are not suggesting that any of our predictors directly alters computer science course availability. It is possible that that is the case, given the work that we have done, but without an experiment or accounting for potential confounders (other variables that may affect the predictor and outcome variables), we cannot be certain about causation.
 
-Previous work does exist about how disparities in education are related to many of the variables we displayed in our project, such as household income and race. For instance, it has been proven that ACT and standardized test scores show more about family wealth and privilege than actual intelligence or likelihood for success. Therefore, it is logical that the same districts that have high average ACT scores will have high median household incomes due to systemic inequality. Because computer science is a newer field, less work has been done specifically about this subject. The rise in available literature on this subject in recent years has also been focused more on college and graduate school, with K-12 education receiving less attention.
+Previous work does exist about how disparities in education are related to many of the variables we displayed in our project, such as household income and race. For instance, it has been proven that ACT and standardized test scores show more about family wealth and privilege than actual intelligence or likelihood for success. Therefore, it is logical that the same districts that have high average ACT scores will have high median household incomes due to systemic inequality. Due to the fact that computer science is a newer field, less work has been done specifically about this subject. The rise in available literature on this subject in recent years has also been focused more on college and graduate school, with K-12 education receiving less attention.
 
-That being said, there are many nuances to this issue of course availability and inequality that we could not address within the scope of our project. One variable we looked at was race, and while the connection between race and educational disparities has been studied, that can be difficult to see in some of our work. We hypothesize that there are a few reasons for this. First, Minnesota in general is largely populated by White people. Furthermore, the places with the most racial diversity (near the Twin Cities) are also places with considerable inequality. Without this information, it may seem as though there is correlation between greater diversity, higher median household income, and computer science course availability. However, we cannot make this claim without further investigating how the inequalities within each district play a role.
+That being said, there are many nuances to this issue of course availability and inequality that we could not address within the scope of our project. One variable we looked at was race, and while the connection between race and educational disparities has been studied, that can be difficult to see in some of our work. We hypothesize that there are a few reasons for this. First, Minnesota in general is largely populated by White people. Furthermore, the places with the most racial diversity (near the Twin Cities), are also places with considerable inequality. Without this information, it may seem as though there is correlation between greater diversity, higher median household income, and computer science course availability. However, we cannot make this claim without further investigating how the inequalities within each district play a role.
 
 Along with that, the population size of the districts could affect the outcomes. Districts can encompass many schools, and it is possible that within a district there is variation in demographics and course availability. Future work might include investigating a smaller region to explore some of these nuances in order to better understand the connection between computer science course availability in K-12 education and our other variables.
 
